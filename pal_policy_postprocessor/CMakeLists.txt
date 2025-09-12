@@ -5,30 +5,16 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslib
   std_msgs
-  message_generation
   message_filters
   visualization_msgs
   interactive_markers
 )
-find_package(Boost REQUIRED COMPONENTS filesystem system)
-
-add_message_files(
-  FILES
-  StampedInt8Array.msg
-  StampedFloat64Array.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-)
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime message_filters
+  CATKIN_DEPENDS
+    roscpp std_msgs message_filters visualization_msgs interactive_markers
 )
 
-
-
-
-
-include_directories()
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
