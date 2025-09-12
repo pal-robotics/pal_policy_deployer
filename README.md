@@ -10,7 +10,7 @@ RL nodes for
 
 TODO
 
-- Add interactive marker node.
+- ~~Add interactive marker node.~~
 - Create three launch files for reach, loco, and balance (sim2sim).
 - Add an option to run sim2real in each.
 - Then merge them into a single, parameterized launch file.
