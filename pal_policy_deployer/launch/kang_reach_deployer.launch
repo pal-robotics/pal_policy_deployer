@@ -1,0 +1,28 @@
+<launch>
+  <!-- Start the preprocessor -->
+  <node
+    pkg="pal_policy_preprocessor"
+    type="pal_policy_preprocessor_reach_node"
+    name="pal_policy_preprocessor_reach"
+    output="screen"
+  />
+
+  <!-- Start the inferer -->
+  <node
+    pkg="pal_policy_inferer"
+    type="pal_policy_inferer_reach_node"
+    name="pal_policy_inferer_reach"
+    output="screen"
+  />
+
+  <!-- Start the interactive node -->
+  <node
+    pkg="pal_policy_preprocessor"
+    type="pal_policy_preprocessor_interactive_node"
+    name="pal_policy_preprocessor_interactive"
+    output="screen"
+  />
+
+  <!-- Bring up the subscriber controller -->
+  <include file="$(find subscriber_controller)/launch/kangaroo_subscriber_controller.launch" />
+</launch>

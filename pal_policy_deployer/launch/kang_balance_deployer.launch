@@ -1,0 +1,20 @@
+<launch>
+  <!-- Start the preprocessor -->
+  <node
+    pkg="pal_policy_preprocessor"
+    type="pal_policy_preprocessor_balance_node"
+    name="pal_policy_preprocessor_balance"
+    output="screen"
+  />
+
+  <!-- Start the inferer -->
+  <node
+    pkg="pal_policy_inferer"
+    type="pal_policy_inferer_balance_node"
+    name="pal_policy_inferer_balance"
+    output="screen"
+  />
+
+  <!-- Bring up the subscriber controller -->
+  <include file="$(find subscriber_controller)/launch/kangaroo_subscriber_controller.launch" />
+</launch>

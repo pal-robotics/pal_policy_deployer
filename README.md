@@ -11,11 +11,11 @@ RL nodes for
 TODO
 
 - ~~Add interactive marker node.~~
-- Create three launch files for reach, loco, and balance (sim2sim).
-- Add an option to run sim2real in each.
+- ~~Create three launch files for reach, loco, and balance.~~
 - Then merge them into a single, parameterized launch file.
 - Split the current inference node into two nodes: inference and post-processor.
 - Improve how joint states are fed into the observation vector.
 - Create a base Preprocessor class and derive others from it.
 - Standardize on one inference node (not three per use case).
 - Modularize the post-processor.
+- Create an option to run rviz and plotjuggler with a default config.
