@@ -7,14 +7,28 @@
     output="screen"
   />
 
-  <!-- Start the inferer -->
-  <node
+  <!-- <node
     pkg="pal_policy_inferer"
     type="pal_policy_inferer_loco_node"
     name="pal_policy_inferer_loco"
     output="screen"
   />
 
+  <node
+    pkg="pal_policy_postprocessor"
+    type="pal_policy_postprocessor_node"
+    name="pal_policy_postprocessor"
+    output="screen"
+  /> -->
+
+  <node
+    pkg="pal_policy_postprocessor"
+    type="pal_policy_postprocessor_loco_node"
+    name="pal_policy_postprocessor_loco"
+    output="screen"
+  />
+
+  
   <!-- Bring up the subscriber controller -->
   <include file="$(find subscriber_controller)/launch/kangaroo_subscriber_controller.launch" />
 </launch>

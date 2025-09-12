@@ -115,116 +115,8 @@ void timerCallback(const ros::TimerEvent&)
 
   const float* y_f = outputs.front().GetTensorData<float>();
 
-  /* ---- publish results ------------------------------------------------ */
   std_msgs::Float64MultiArray cmd, last;
-  const float action_scale = 0.5;
 
-  std::vector<double> action(22);
-  // for (size_t i = 0; i < 22; ++i)
-  //     action[i] = action_scale * static_cast<double>(y_f[i]) + joint_pos_offset_legs[i];
-
-  action = {
-    // left leg joints pos target
-    action_scale*y_f[1],
-    action_scale*y_f[4] + 0.05,
-    action_scale*y_f[6],
-    action_scale*y_f[8] + 0.6832,
-    action_scale*y_f[10] - 0.05,
-    action_scale*y_f[12],
-
-    // right leg joints pos target
-    action_scale*y_f[2],
-    action_scale*y_f[5] + 0.05,
-    action_scale*y_f[7],
-    action_scale*y_f[9] + 0.6832,
-    action_scale*y_f[11] - 0.05,
-    action_scale*y_f[13],
-
-    action_scale*y_f[0], // pelvis 1 joint
-    action_scale*y_f[3], // pelvis 2 joint
-
-    0.24,
-    1.32,
-    1.57,
-    0.8,
-
-    -0.24,
-    1.32,
-    -1.57,
-    0.8,
-  };
-
-
-  //////////////////////////////////////////////////////////////////////////////
-  ///////////////////  Publish SubscriberController command  ///////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  // ORIGINAL SUBSCRIBER CONTROLLER
-
-  sensor_msgs::JointState cmd_msg;
-  cmd_msg.header.stamp = ros::Time::now();
-  cmd_msg.name = {
-    "leg_left_1_joint",
-    "leg_left_2_joint",
-    "leg_left_3_joint",
-    "leg_left_length_joint",
-    "leg_left_4_joint",
-    "leg_left_5_joint",
-
-    "leg_right_1_joint",
-    "leg_right_2_joint",
-    "leg_right_3_joint",
-    "leg_right_length_joint",
-    "leg_right_4_joint",
-    "leg_right_5_joint",
-
-    "pelvis_1_joint",
-    "pelvis_2_joint",
-
-    "arm_left_1_joint",
-    "arm_left_2_joint",
-    "arm_left_3_joint",
-    "arm_left_4_joint",
-
-    "arm_right_1_joint",
-    "arm_right_2_joint",
-    "arm_right_3_joint",
-    "arm_right_4_joint",
-  };
-
-  cmd_msg.position = action;
-
-  std::vector<double> res(22, 0.0);
-
-  cmd_msg.velocity = res;
-  cmd_msg.effort = res;
-
-  pub_sub_cmd.publish(cmd_msg);
-
-  //////////////////////////////////////////////////////////////////////////////
-  ///////////////////  Publish Ruckig command  /////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  // std::vector<double> positions_ruckig = {
-  //   action[0],
-  //   action[1],
-  //   action[2],
-  //   action[3],
-  // };
-
-  // // std::vector<double> positions_ruckig = {
-  // //   0.0,
-  // //   0.0,
-  // //   0.0,
-  // //   0.6
-  // // };
-
-  // std_msgs::Float64MultiArray ruckig_goal;
-  // ruckig_goal.data = positions_ruckig;
-
-  // pub_ruckig_goal.publish(ruckig_goal);
-
-  //////////////////////////////////////////////////////////////////////////
   last.data.resize(22);
   for (size_t i = 0; i < 22; ++i)
       last.data[i] = y_f[i];
@@ -271,9 +163,6 @@ int main(int argc,char** argv)
 
   in_names .push_back(sess->GetInputNameAllocated (0,Ort::AllocatorWithDefaultOptions()).release());
   out_names.push_back(sess->GetOutputNameAllocated(0,Ort::AllocatorWithDefaultOptions()).release());
-
-  pub_sub_cmd = nh.advertise<sensor_msgs::JointState>("/subscriber_controller/desired_state",1); // ORIGINAL SUBSCRIBER CONTROLLER
-  // pub_ruckig_goal = nh.advertise<std_msgs::Float64MultiArray>("/rl_ruckig_layer/command", 1);
   
   pub_last = nh.advertise<std_msgs::Float64MultiArray>("/rl_policy/last_action",1);
   ros::Subscriber sub = nh.subscribe("/rl_policy/obs",1,obsCB);

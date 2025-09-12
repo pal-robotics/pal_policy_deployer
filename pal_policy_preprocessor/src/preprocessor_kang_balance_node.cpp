@@ -221,7 +221,6 @@ void lastCB(const std_msgs::Float64MultiArray::ConstPtr& a)
 
 }
 
-
 // compute imu data
 // (6)
 void imuCB(const sensor_msgs::Imu::ConstPtr& msg)
