@@ -36,11 +36,6 @@ link_directories(/opt/onnxruntime/lib)
 ########################
 
 
-
-
-
-
-
 add_executable(${PROJECT_NAME}_reach_node src/preprocessor_kang_reach_node.cpp)
 target_link_libraries(${PROJECT_NAME}_reach_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 

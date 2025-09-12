@@ -220,10 +220,10 @@ void obsCB(const std_msgs::Float64MultiArray::ConstPtr& m)
 
 int main(int argc,char** argv)
 {
-  ros::init(argc,argv,"onnx_inference"); ros::NodeHandle nh("~");
+  ros::init(argc,argv,"pal_policy_deployer"); ros::NodeHandle nh("~");
   
- std::string pkg_root = ros::package::getPath("onnx_inference_cpp");
-  std::string config_dir = pkg_root + "/src/models/kang_loco/loco_v25/exported/";
+  std::string pkg_root = ros::package::getPath("pal_policy_deployer");
+  std::string config_dir = pkg_root + "/models/loco/exported/";
   std::string model_path;
   bool found = false;
   for (auto& entry : fs::directory_iterator(config_dir)) {
@@ -236,16 +236,11 @@ int main(int argc,char** argv)
     }
   }
 
-  // 2) If none found, fall back to the param (or fail)
+  // 2) If none found, fail
   if (!found) {
-    nh.param("model_path", model_path,
-      std::string("/home/louislelay/exchange/rl_ws/src/onnx_inference_cpp/src/models/kang_balance/balance_v11/exported/policy.onnx"));
-    if (!fs::exists(model_path)) {
-      ROS_FATAL("No ONNX model found in %s, and fallback '%s' doesn't exist.",
-                config_dir.c_str(), model_path.c_str());
-      return 1;
-    }
-    ROS_WARN("Using fallback model_path: %s", model_path.c_str());
+    ROS_FATAL("No ONNX model found in %s, and fallback '%s' doesn't exist.",
+              config_dir.c_str(), model_path.c_str());
+    return 1;
   }
 
 

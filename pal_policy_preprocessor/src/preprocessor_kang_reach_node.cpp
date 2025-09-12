@@ -5,116 +5,6 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
-
-
-
-
-// ---------------------- obs for left leg only ------------------------------
-
-
-
-// //  from env yaml file
-// // 
-// // leg_left_1_joint: 0.0
-// // leg_left_2_joint: 0.05
-// // leg_left_3_joint: 0.0
-// // leg_left_length_joint: 0.6
-// // leg_left_4_joint: -0.07
-// // leg_left_5_joint: 0.0
-// // leg_left_femur_joint: 0.91
-// // leg_left_knee_joint: 1.82
-
-
-// static const std::vector<std::string> J{
-//   "leg_left_1_joint","leg_left_2_joint","leg_left_3_joint",
-//   "leg_left_femur_joint",
-//   "leg_left_length_joint","leg_left_knee_joint","leg_left_4_joint","leg_left_5_joint"};
-
-// std::vector<double> obs(29,0.0);
-
-
-
-// void jsCB(const sensor_msgs::JointState::ConstPtr& msg)
-// {
-//   for (size_t k = 0; k < J.size(); ++k)
-//     for (size_t i = 0; i < msg->name.size(); ++i)
-//       if (msg->name[i] == J[k]) {
-//         if (i < msg->position.size()) obs[k]      = msg->position[i];
-//         if (i < msg->velocity.size()) obs[8 + k]  = msg->velocity[i];
-//       }
-
-//   printf("Current joint position:\n joint 1: %f,\n joint 2: %f,\n joint 3: %f,\n joint length: %f,\n joint 4: %f,\n joint 5: %f,\n", obs[0], obs[1], obs[2], obs[4], obs[6], obs[7]);
-
-//   obs[0] -= 0.0;  // leg_left_1_joint
-//   obs[1] -= 0.05;  // leg_left_2_joint
-//   obs[2] -= 0.0;  // leg_left_3_joint
-//   obs[3] -= 0.91;  // leg_left_femur_joint
-//   obs[4] -= 0.6; // leg_left_length_joint
-//   obs[5] -= 1.82; // leg_left_knee_joint
-//   obs[6] -= -0.07; // leg_left_4_joint
-//   obs[7] -= 0.0; // leg_left_5_joint
-
-//   printf("Processed current joint position:\n joint 1: %f,\n joint 2: %f,\n joint 3: %f,\n joint length: %f,\n joint 4: %f,\n joint 5: %f,\n", obs[0], obs[1], obs[2], obs[4], obs[6], obs[7]);
-
-
-
-//   // obs[0] = 0.0029;
-//   // obs[1] = 0.0482;
-//   // obs[2] = -0.0011;
-//   // obs[3] = -0.2745; 
-//   // obs[4] = -0.1492; 
-//   // obs[5] = -0.5588; 
-//   // obs[6] = -0.0321;
-//   // obs[7] =  0.0020;
-
-//   // obs[8] = -0.2410;
-//   // obs[9] =  0.7186;
-//   // obs[10] =  0.1250;
-//   // obs[11] = -0.2595;
-//   // obs[12] = -0.1362;
-//   // obs[13] = -0.4903;
-//   // obs[14] = -0.7269;
-//   // obs[15] =  0.1428;
-
-
-
-// // [INFO] Observations: tensor([[ 0.0029;  0.0482; -0.0011; -0.2745; -0.1492; -0.5588; -0.0321;  0.0020;
-// //          -0.2410;  0.7186;  0.1250; -0.2595; -0.1362; -0.4903; -0.7269;  0.1428;
-// //          -0.0941;  0.1564; -0.7381;  1.0000;  0.0000;  0.0000;  0.0000;  0.2279;
-// //           0.8352;  0.2799; -0.6727; -0.0471;  0.0276]]; device='cuda:0')
-
-
-
-//   // [ 5.30519299e-02 -3.78638368e-02 -1.80734530e-01 -3.29081092e-01
-// //  
-
-// //  -1.94007682e-03 -1.14413595e-03 -4.69911890e-03 -4.02024090e-02
-// //  -2.55487356e-02 -8.04205611e-02  5.54419030e-03  1.60253868e-02
-// }
-
-// ---------------------------------------------------------------------------------------------------
-// -------------------- full body obs ---------------------------------------
-
-static const std::vector<std::string> left_leg_order {
-    "leg_left_1_joint","leg_left_2_joint","leg_left_3_joint",
-    "leg_left_length_joint",
-    "leg_left_4_joint","leg_left_5_joint"
-};
-
-static const std::vector<std::string> legs_only_order {
-    "leg_left_1_joint", "leg_right_1_joint", 
-    "leg_left_2_joint", "leg_right_2_joint", 
-    "leg_left_3_joint", "leg_right_3_joint", 
-    "leg_left_length_joint", "leg_right_length_joint",
-    "leg_left_4_joint", "leg_right_4_joint",
-    "leg_left_5_joint", "leg_right_5_joint"
-};
-
-
-
-
-
-
 static const std::vector<std::string> full_body_order {
   "pelvis_1_joint", 
   "leg_left_1_joint", "leg_right_1_joint", 
@@ -187,7 +77,6 @@ static const std::array<double, 52> default_obs = {{
 // (12 + 12 = 24) or 26 + 26 = 52
 void jsCB(const sensor_msgs::JointState::ConstPtr& msg)
 {
-    // if (nanani) J = ...
     J = full_body_order;
 
 
@@ -223,51 +112,24 @@ void jsCB(const sensor_msgs::JointState::ConstPtr& msg)
     
 }
 
-
-// TENTATIVE DE GAINS
-// 40 20
-// 40 20
-
-
-
-
-
-
 // ------------------------------------------------------------------------------------
 
-void poseCB(const geometry_msgs::Point::ConstPtr& msg)   // renamed param
+void poseCB(const geometry_msgs::Point::ConstPtr& msg)
 {
   obs[52] = msg->x;
   obs[53] = msg->y;
   obs[54] = msg->z;
   printf("Target Position: x: %f, y: %f, z: %f\n", obs[52], obs[53], obs[54]);
-
-  // obs[55] = msg->pose.orientation.w;
-  // obs[56] = msg->pose.orientation.x;
-  // obs[57] = msg->pose.orientation.y;
-  // obs[58] = msg->pose.orientation.z;
-
-
 }
 
 void lastCB(const std_msgs::Float64MultiArray::ConstPtr& a)
 {
   for (size_t i = 0; i < 6 && i < a->data.size(); ++i)
     obs[59 + i] = a->data[i];
-
-  // obs[59] = 0.2279;
-  // obs[60] = 0.8316; 
-  // obs[61] = 0.2799;
-  // obs[65] =  -0.6727; 
-  // obs[63] = -0.0471; 
-  // obs[64] =  0.0276;
 }
 
 int main(int argc,char** argv)
 {
-  // obs[52] = -4.0359e-02;
-  // obs[53] = 2.2854e-02;
-  // obs[54] = -7.5616e-01;  
   obs[52] = 0.025;  
   obs[53] = 0.141; 
   obs[54] = -0.898;  
@@ -291,20 +153,3 @@ int main(int argc,char** argv)
     ros::spinOnce(); r.sleep();
   }
 }
-
-
-
-
-// [ 5.30519299e-02 -3.78638368e-02 -1.80734530e-01 -3.29081092e-01
-//  -1.82879961e-01 -6.58037491e-01  9.11137310e-02 -1.76704139e-01
-
-//  -1.94007682e-03 -1.14413595e-03 -4.69911890e-03 -4.02024090e-02
-//  -2.55487356e-02 -8.04205611e-02  5.54419030e-03  1.60253868e-02
-
-//   0.00000000e+00  1.00000000e-01 -9.50000000e-01  
-//   1.57079633e+00
-//   0.00000000e+00  0.00000000e+00  1.06123686e-01 
-  
-//   -1.80683374e-01
-//  -3.49070787e-01 -1.00654089e+00 -4.92178202e-01 -2.54865050e-01
-//   1.67842865e-01 -3.51792157e-01  0.00000000e+00]
