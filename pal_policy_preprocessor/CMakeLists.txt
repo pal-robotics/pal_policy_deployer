@@ -33,6 +33,10 @@ target_link_libraries(${PROJECT_NAME}_balance_node ${catkin_LIBRARIES} ${Boost_L
 add_executable(${PROJECT_NAME}_loco_node src/preprocessor_kang_loco_node.cpp)
 target_link_libraries(${PROJECT_NAME}_loco_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+# Interactive marker node for ONNX inference
+
+add_executable(${PROJECT_NAME}_interactive_node src/interactive_marker_node.cpp)
+target_link_libraries(${PROJECT_NAME}_interactive_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ##############
 
