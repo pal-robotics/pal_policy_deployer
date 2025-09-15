@@ -50,8 +50,6 @@ target_link_libraries(${PROJECT_NAME}_loco_node
   onnxruntime
 )
 
-
-
-install(TARGETS ${PROJECT_NAME}_reach_node ${PROJECT_NAME}_balance_node ${PROJECT_NAME}_loco_node  
+install(TARGETS ${PROJECT_NAME}_reach_node ${PROJECT_NAME}_balance_node ${PROJECT_NAME}_loco_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
