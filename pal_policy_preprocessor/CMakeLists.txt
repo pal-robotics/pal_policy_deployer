@@ -38,6 +38,13 @@ target_link_libraries(${PROJECT_NAME}_loco_node ${catkin_LIBRARIES} ${Boost_LIBR
 add_executable(${PROJECT_NAME}_interactive_node src/interactive_marker_node.cpp)
 target_link_libraries(${PROJECT_NAME}_interactive_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+
+
+add_executable(joy_twist_accumulator src/joy_twist_accumulator.cpp)
+target_link_libraries(joy_twist_accumulator ${catkin_LIBRARIES})
+add_dependencies(joy_twist_accumulator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
 ##############
 
 

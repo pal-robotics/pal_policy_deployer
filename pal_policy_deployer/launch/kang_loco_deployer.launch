@@ -14,7 +14,13 @@
     output="screen"
   />
 
-  
+  <node 
+    pkg="pal_policy_preprocessor" 
+    type="joy_twist_accumulator" 
+    name="joy_twist_accumulator" 
+    output="screen"
+  />
+
   <!-- Bring up the subscriber controller -->
   <include file="$(find subscriber_controller)/launch/kangaroo_subscriber_controller.launch" />
 </launch>
