@@ -7,26 +7,12 @@
     output="screen"
   />
 
-  <!-- <node
+  <node
     pkg="pal_policy_inferer"
     type="pal_policy_inferer_balance_node"
     name="pal_policy_inferer_balance"
     output="screen"
   />
-
-  <node
-    pkg="pal_policy_postprocessor"
-    type="pal_policy_postprocessor_node"
-    name="pal_policy_postprocessor"
-    output="screen"
-  /> -->
-
-  <node
-    pkg="pal_policy_postprocessor"
-    type="pal_policy_postprocessor_balance_node"
-    name="pal_policy_postprocessor_balance"
-    output="screen"
-  /> 
   
   <!-- Bring up the subscriber controller -->
   <include file="$(find subscriber_controller)/launch/kangaroo_subscriber_controller.launch" />

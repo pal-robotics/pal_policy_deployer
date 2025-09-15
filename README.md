@@ -13,7 +13,7 @@ TODO
 - ~~Add interactive marker node.~~
 - ~~Create three launch files for reach, loco, and balance.~~
 - ~~Then merge them into a single, parameterized launch file.~~
-- Split the current inference node into two nodes: inference and post-processor.
+- ~~Split the current inference node into two nodes: inference and post-processor.~~ -> REMOVED POSTPROCESOR, introduced too much DELAY
 - Improve how joint states are fed into the observation vector.
 - Create a base Preprocessor class and derive others from it.
 - Standardize on one inference node (not three per use case).

@@ -7,24 +7,10 @@
     output="screen"
   />
 
-  <!-- <node
+  <node
     pkg="pal_policy_inferer"
     type="pal_policy_inferer_loco_node"
     name="pal_policy_inferer_loco"
-    output="screen"
-  />
-
-  <node
-    pkg="pal_policy_postprocessor"
-    type="pal_policy_postprocessor_node"
-    name="pal_policy_postprocessor"
-    output="screen"
-  /> -->
-
-  <node
-    pkg="pal_policy_postprocessor"
-    type="pal_policy_postprocessor_loco_node"
-    name="pal_policy_postprocessor_loco"
     output="screen"
   />
 
