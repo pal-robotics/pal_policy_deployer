@@ -34,20 +34,20 @@ constexpr const T& clamp(const T& v, const T& lo, const T& hi) {
     return v < lo ? lo : (hi < v ? hi : v);
 }
 
-static const std::vector<std::string> full_body_order {
+static const std::vector<std::string> isaaclab_order {
   "pelvis_1_joint", 
   "leg_left_1_joint", "leg_right_1_joint", 
   "pelvis_2_joint", 
   "leg_left_2_joint", "leg_right_2_joint", 
-  // "arm_left_1_joint", "arm_right_1_joint", 
+  "arm_left_1_joint", "arm_right_1_joint", 
   "leg_left_3_joint", "leg_right_3_joint", 
-  // "arm_left_2_joint", "arm_right_2_joint", 
+  "arm_left_2_joint", "arm_right_2_joint", 
   "leg_left_length_joint", /*"leg_left_femur_joint",*/
   "leg_right_length_joint", /*"leg_right_femur_joint",*/ 
-  // "arm_left_3_joint", "arm_right_3_joint", 
+  "arm_left_3_joint", "arm_right_3_joint", 
   "leg_left_4_joint", /*"leg_left_knee_joint",*/  
   "leg_right_4_joint", /*"leg_right_knee_joint",*/  
-  // "arm_left_4_joint", "arm_right_4_joint", 
+  "arm_left_4_joint", "arm_right_4_joint", 
   "leg_left_5_joint", "leg_right_5_joint"
 };
 
@@ -57,17 +57,50 @@ static const std::vector<double> joint_pos_offset {
   0.0, 0.0, 
   0.0, 
   0.05, 0.05, 
-  // 0.24, -0.24, 
+  0.24, -0.24, 
   0.0, 0.0, 
-  // 1.32, 1.32, 
+  1.32, 1.32, 
   0.6832, // 1.1172, 
   0.6832, // 1.1172, 
-  // 1.57, -1.57, 
+  1.57, -1.57, 
   -0.05, // 2.2345, 
   -0.05, // 2.2345, 
-  // 0.8, 0.8, 
+  0.8, 0.8, 
   0.0, 0.0
 };
+
+
+// 1 if this joint uses y_f, 0 if it’s an arm (fixed offset only)
+static const std::vector<int> use_y = {
+  1, 1, 1, 1, 1, 1,   // pelvis + legs
+  0, 0,               // arms (constant offset only)
+  1, 1,               // legs
+  0, 0,               // arms
+  1, 1,               // legs
+  0, 0,               // arms
+  1, 1,               // legs
+  0, 0                // arms
+};
+
+// Index in y_f if used, otherwise 0
+static const std::vector<int> y_idx = {
+   0, 1, 2, 3, 4, 5,   // pelvis + legs
+   0, 0,               // arms
+   6, 7,               // legs
+   0, 0,               // arms
+   8, 9,               // legs
+   0, 0,               // arms
+   10, 11,             // legs
+   0, 0                // arms
+};
+
+static constexpr int64_t input_shape[2] = {1, 77};
+std_msgs::Float64MultiArray cmd, last;
+const float action_scale = 0.25;
+
+std::vector<double> action(22);
+
+std::vector<double> res(22, 0.0);
 
 // add this in a timer callback running at 50Hz
 void timerCallback(const ros::TimerEvent&)
@@ -80,7 +113,7 @@ void timerCallback(const ros::TimerEvent&)
   }
 
   /* ---- wrap it in an Ort::Value tensor -------------------------------- */
-  static constexpr int64_t input_shape[2] = {1, 77};
+
   Ort::Value input_tensor =
       Ort::Value::CreateTensor<float>(mem, obs_input.data(), obs_input.size(), input_shape, 2);
 
@@ -91,118 +124,22 @@ void timerCallback(const ros::TimerEvent&)
 
   const float* y_f = outputs.front().GetTensorData<float>();
 
-  /* ---- publish results ------------------------------------------------ */
-  std_msgs::Float64MultiArray cmd, last;
-  const float action_scale = 0.25;
-
-  std::vector<double> action(22);
-  // for (size_t i = 0; i < 22; ++i)
-  //     action[i] = action_scale * static_cast<double>(y_f[i]) + joint_pos_offset_legs[i];
-
-  action = {
-    // left leg joints pos target
-    action_scale*y_f[1],
-    action_scale*y_f[4] + 0.05,
-    action_scale*y_f[6],
-    action_scale*y_f[8] + 0.6832,
-    action_scale*y_f[10] - 0.05,
-    action_scale*y_f[12],
-
-    // right leg joints pos target
-    action_scale*y_f[2],
-    action_scale*y_f[5] + 0.05,
-    action_scale*y_f[7],
-    action_scale*y_f[9] + 0.6832,
-    action_scale*y_f[11] - 0.05,
-    action_scale*y_f[13],
-
-    action_scale*y_f[0], // pelvis 1 joint
-    action_scale*y_f[3], // pelvis 2 joint
-
-    0.24,
-    1.32,
-    1.57,
-    0.8,
-
-    -0.24,
-    1.32,
-    -1.57,
-    0.8,
-  };
-
-
-  //////////////////////////////////////////////////////////////////////////////
-  ///////////////////  Publish SubscriberController command  ///////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  // ORIGINAL SUBSCRIBER CONTROLLER
+  for (size_t i = 0; i < 22; ++i) {
+    action[i] = action_scale * y_f[y_idx[i]] * use_y[i] + joint_pos_offset[i];
+  }
 
   sensor_msgs::JointState cmd_msg;
   cmd_msg.header.stamp = ros::Time::now();
-  cmd_msg.name = {
-    "leg_left_1_joint",
-    "leg_left_2_joint",
-    "leg_left_3_joint",
-    "leg_left_length_joint",
-    "leg_left_4_joint",
-    "leg_left_5_joint",
 
-    "leg_right_1_joint",
-    "leg_right_2_joint",
-    "leg_right_3_joint",
-    "leg_right_length_joint",
-    "leg_right_4_joint",
-    "leg_right_5_joint",
-
-    "pelvis_1_joint",
-    "pelvis_2_joint",
-
-    "arm_left_1_joint",
-    "arm_left_2_joint",
-    "arm_left_3_joint",
-    "arm_left_4_joint",
-
-    "arm_right_1_joint",
-    "arm_right_2_joint",
-    "arm_right_3_joint",
-    "arm_right_4_joint",
-  };
-
+  cmd_msg.name = isaaclab_order;
   cmd_msg.position = action;
-
-  std::vector<double> res(22, 0.0);
-
   cmd_msg.velocity = res;
   cmd_msg.effort = res;
 
   pub_sub_cmd.publish(cmd_msg);
 
-  //////////////////////////////////////////////////////////////////////////////
-  ///////////////////  Publish Ruckig command  /////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  // std::vector<double> positions_ruckig = {
-  //   action[0],
-  //   action[1],
-  //   action[2],
-  //   action[3],
-  // };
-
-  // // std::vector<double> positions_ruckig = {
-  // //   0.0,
-  // //   0.0,
-  // //   0.0,
-  // //   0.6
-  // // };
-
-  // std_msgs::Float64MultiArray ruckig_goal;
-  // ruckig_goal.data = positions_ruckig;
-
-  // pub_ruckig_goal.publish(ruckig_goal);
-
-  //////////////////////////////////////////////////////////////////////////
-  last.data.resize(22);
-  for (size_t i = 0; i < 22; ++i)
+  last.data.resize(14);
+  for (size_t i = 0; i < 14; ++i)
       last.data[i] = y_f[i];
   pub_last.publish(last);
 }

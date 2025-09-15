@@ -1,21 +1,24 @@
-# pal_policy_deployer
+# pal_policy_deployer v0.0.0
 
-v0.0.0
+**WIP:** Currently, only 3 policies are available, and only for Kang.
 
-RL nodes for
+To run:
 
-- kang reach
-- kang_balance
-- (wip) kang_loco
+```bash
+roslaunch pal_policy_deployer kang_rl_deployer.launch policy:=(loco|reach|balance)
+```
 
-TODO
+- **pal_policy_deployer**: Package containing the models and launch files. Installing it will also install the two other packages.
+- **pal_policy_inferer**: Package containing the nodes for running policy inference and sending position references.
+- **pal_policy_preprocessor**: Package containing the nodes for generating observation inputs and publishing them to a topic.
 
-- ~~Add interactive marker node.~~
-- ~~Create three launch files for reach, loco, and balance.~~
-- ~~Then merge them into a single, parameterized launch file.~~
-- ~~Split the current inference node into two nodes: inference and post-processor.~~ -> REMOVED POSTPROCESOR, introduced too much DELAY
-- ~~Improve how joint states are fed into the observation vector.~~
-- Create a base Preprocessor class and derive others from it.
-- Standardize on one inference node (not three per use case).
-- Modularize the post-processor.
-- Create an option to run rviz and plotjuggler with a default config.
+### Available RL Nodes
+
+- Kang Reach
+- Kang Balance
+- (WIP) Kang Loco → validated only in sim2sim
+
+### TODO
+
+- Retrain **Balance** to align offsets and merge both inferers.
+- Train with **Reach, Balance, and Loco** combined to include arm control.
