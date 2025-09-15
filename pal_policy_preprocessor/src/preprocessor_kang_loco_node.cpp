@@ -10,10 +10,10 @@
 #include <algorithm> 
 #include <array>
 
-// ---------------------------------------------------------------------------------------------------
-// -------------------- full body obs ---------------------------------------
+// ----------- FULL BODY INFORMATIONS ----------------------------
 
-static const std::vector<std::string> full_body_order {
+// Isaac Lab joint order
+static const std::vector<std::string> isaaclab_order {
   "pelvis_1_joint", 
   "leg_left_1_joint", "leg_right_1_joint", 
   "pelvis_2_joint", 
@@ -27,10 +27,10 @@ static const std::vector<std::string> full_body_order {
   "leg_left_4_joint", "leg_left_knee_joint", 
   "leg_right_4_joint", "leg_right_knee_joint", 
   "arm_left_4_joint", "arm_right_4_joint", 
-  "leg_left_5_joint", "leg_right_5_joint"
+  "leg_left_5_joint", "leg_right_5_joint",
 };
 
-// offset in the order of joint_states joint names
+// Isaac Lab joint position offsets
 static const std::vector<double> joint_pos_offset {
   0.0, 
   0.0, 0.0, 
@@ -48,31 +48,9 @@ static const std::vector<double> joint_pos_offset {
   0.0, 0.0
 };
 
-std::vector<double> obs(77, 0.0); // work on the size to be dynamic
+std::vector<double> obs(77, 0.0);
 
-std::vector<std::string> J;
-
-// Default first 52 observations
-static const std::array<double, 52> default_obs = {{
-  -4.8093e-03, -1.1073e-01,  1.8107e-02, -4.5884e-03,  2.6222e-01,
-  5.1888e-01, -5.1660e-03, -5.9444e-03, -1.2422e-02,  1.0425e-02,
-  -2.4786e-03,  2.8573e-02, -1.7757e-01, -3.7888e-01, -3.5333e-01,
-  -6.5049e-01, -5.5669e-03, -2.1682e-03, -1.7941e-01, -7.5274e-01,
-  2.8351e-01, -1.3054e+00,  7.8863e-04, -7.4411e-03, -1.7731e-01,
-  -4.1880e-01,  
-
-  5.7644e-01,  1.2059e+00,  3.6580e-01,  4.5978e-01, -1.0608e+00, 
-  -1.1098e+00,  1.1494e+00, -9.2570e-02, -9.9428e-01, 9.6201e-01, 
-  -1.0529e+00, -1.4043e+00,  2.7441e-01,  5.0558e-01, 8.2466e-01, 
-  -1.4077e+00,  7.3865e-02, -1.2732e-01,  9.6142e-01, -4.0938e-01,  
-  2.5792e-01, -6.3345e-01,  3.6401e-01, -1.3355e+00, 8.2380e-01,  
-  4.2572e-01, 
-
-}};
-
-
-// compute joint pos and joint vel
-// (12 + 12 = 24) or 26 + 26 = 52
+// joint pos and joint vel (26 + 26 = 52)
 void jsCB(const sensor_msgs::JointState::ConstPtr& msg)
 {
     // J = full_body_order;
@@ -157,33 +135,30 @@ void lastCB(const std_msgs::Float64MultiArray::ConstPtr& a)
     obs[52 + i] = a->data[i];
 }
 
-
-// compute imu data
-// (6)
+// imu data (6)
 void imuCB(const sensor_msgs::Imu::ConstPtr& msg)
 {
     // base_ang_vel
     obs[66] = msg->angular_velocity.x;
     obs[67] = msg->angular_velocity.y;
     obs[68] = msg->angular_velocity.z;
-    // printf("Base angular velocity: x: %f, y: %f, z: %f\n", msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
+    // ROS_INFO("Base angular velocity: x: %f, y: %f, z: %f\n", msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
 
     // base_lin_acc
     obs[69] = msg->linear_acceleration.x;
     obs[70] = msg->linear_acceleration.y;
     obs[71] = msg->linear_acceleration.z;
-    // printf("Base linear acceleration: x: %f, y: %f, z: %f\n", msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
+    // ROS_INFO("Base linear acceleration: x: %f, y: %f, z: %f\n", msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
 }
 
-// rosrun teleop_twist_keyboard teleop_twist_keyboard.py 
-// (3)
+// rosrun teleop_twist_keyboard teleop_twist_keyboard.py (3)
 void velCmdCB(const geometry_msgs::Twist::ConstPtr& msg)
 {
     obs[72] = msg->linear.x;
     obs[73] = msg->linear.y;
     obs[74] = msg->angular.z;
 
-    printf("Velocity command: Vx: %f, Vy: %f, wz: %f\n", msg->linear.x, msg->linear.y, msg->angular.z);
+    ROS_INFO("Velocity command: Vx: %f, Vy: %f, wz: %f\n", msg->linear.x, msg->linear.y, msg->angular.z);
 }
 
 
@@ -191,10 +166,6 @@ void velCmdCB(const geometry_msgs::Twist::ConstPtr& msg)
 int main(int argc,char** argv)
 {
   ros::init(argc,argv,"onnx_input_pub"); ros::NodeHandle nh;
-
-  obs[72] = 0.0; // Vx
-  obs[73] = 0.0; // Vx
-  obs[74] = 0.0; // Vxz;
 
   ros::Subscriber s1 = nh.subscribe("/joint_states", 1, jsCB);
   ros::Subscriber s2 = nh.subscribe("/rl_policy/last_action", 1, lastCB);
@@ -205,8 +176,9 @@ int main(int argc,char** argv)
 
   ros::Rate r(50);
 
-  const double period = 0.8; //0.6;
+  const double period = 0.6;
   double global_phase = 0.0;
+
   ros::Time last_time = ros::Time::now();
 
   while (ros::ok()) {
@@ -217,7 +189,7 @@ int main(int argc,char** argv)
 
     if (dt > 0.0) {
       double freq = 1.0 / dt;
-      printf("Callback frequency: %f Hz\n", freq);
+      // ROS_INFO("Callback frequency: %f Hz\n", freq);
     }
 
     global_phase += dt / period;
