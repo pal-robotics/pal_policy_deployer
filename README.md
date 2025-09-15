@@ -20,5 +20,13 @@ roslaunch pal_policy_deployer kang_rl_deployer.launch policy:=(loco|reach|balanc
 
 ### TODO
 
-- Retrain **Balance** to align offsets and merge both inferers.
-- Train with **Reach, Balance, and Loco** combined to include arm control.
+P0
+- Retrain balance to have the correct offset
+- Find a way to make obs size dynamic 
+- Make balance and loco inferer node the same
+
+P1
+- Retrain reach, balance and loco to use the arms as well
+- Clean reach inferer and preprocessor node
+- Make reach inferer node the same as the other as well
+- Find a way to make the preprocessor be the same 

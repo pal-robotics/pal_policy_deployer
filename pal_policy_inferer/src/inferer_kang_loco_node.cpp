@@ -72,26 +72,26 @@ static const std::vector<double> joint_pos_offset {
 
 // 1 if this joint uses y_f, 0 if it’s an arm (fixed offset only)
 static const std::vector<int> use_y = {
-  1, 1, 1, 1, 1, 1,   // pelvis + legs
-  0, 0,               // arms (constant offset only)
-  1, 1,               // legs
-  0, 0,               // arms
-  1, 1,               // legs
-  0, 0,               // arms
-  1, 1,               // legs
-  0, 0                // arms
+  1, 1, 1, 1, 1, 1,
+  0, 0,
+  1, 1,
+  0, 0,
+  1, 1,
+  0, 0,
+  1, 1,
+  0, 0 
 };
 
 // Index in y_f if used, otherwise 0
 static const std::vector<int> y_idx = {
-   0, 1, 2, 3, 4, 5,   // pelvis + legs
-   0, 0,               // arms
-   6, 7,               // legs
-   0, 0,               // arms
-   8, 9,               // legs
-   0, 0,               // arms
-   10, 11,             // legs
-   0, 0                // arms
+   0, 1, 2, 3, 4, 5,
+   0, 0,
+   6, 7,
+   0, 0,
+   8, 9,
+   0, 0,
+   10, 11,
+   0, 0 
 };
 
 static constexpr int64_t input_shape[2] = {1, 77};
@@ -102,22 +102,17 @@ std::vector<double> action(22);
 
 std::vector<double> res(22, 0.0);
 
-// add this in a timer callback running at 50Hz
 void timerCallback(const ros::TimerEvent&)
 {
-  /* ---- copy the latest observation under lock ------------------------- */
   std::vector<float> obs_input;
   {
     std::lock_guard<std::mutex> lk(observation_mutex);
     obs_input.assign(observation.begin(), observation.end());   // 77 values
   }
 
-  /* ---- wrap it in an Ort::Value tensor -------------------------------- */
-
   Ort::Value input_tensor =
       Ort::Value::CreateTensor<float>(mem, obs_input.data(), obs_input.size(), input_shape, 2);
 
-  /* ---- run inference -------------------------------------------------- */
   auto outputs = sess->Run(Ort::RunOptions{nullptr},
                            in_names.data(),  &input_tensor, 1,
                            out_names.data(), 1);
@@ -173,22 +168,18 @@ int main(int argc,char** argv)
     }
   }
 
-  // 2) If none found, fail
   if (!found) {
     ROS_FATAL("No ONNX model found in %s, and fallback '%s' doesn't exist.",
               config_dir.c_str(), model_path.c_str());
     return 1;
   }
 
-
-  // std::string model; nh.param("model_path",model,std::string("/home/spring/exchange/louis_dockers/rl_ws/src/onnx_inference_cpp/src/models/v3/policy.onnx"));
   sess.reset(new Ort::Session(env,model_path.c_str(),Ort::SessionOptions{}));
 
   in_names .push_back(sess->GetInputNameAllocated (0,Ort::AllocatorWithDefaultOptions()).release());
   out_names.push_back(sess->GetOutputNameAllocated(0,Ort::AllocatorWithDefaultOptions()).release());
 
-  pub_sub_cmd = nh.advertise<sensor_msgs::JointState>("/subscriber_controller/desired_state",1); // ORIGINAL SUBSCRIBER CONTROLLER
-  // pub_ruckig_goal = nh.advertise<std_msgs::Float64MultiArray>("/rl_ruckig_layer/command", 1);
+  pub_sub_cmd = nh.advertise<sensor_msgs::JointState>("/subscriber_controller/desired_state",1);
   
   pub_last = nh.advertise<std_msgs::Float64MultiArray>("/rl_policy/last_action",1);
   ros::Subscriber sub = nh.subscribe("/rl_policy/obs",1,obsCB);

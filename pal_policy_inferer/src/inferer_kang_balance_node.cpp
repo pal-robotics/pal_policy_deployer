@@ -100,22 +100,17 @@ std::vector<double> action(22);
 
 std::vector<double> res(22, 0.0);
 
-// add this in a timer callback running at 50Hz
 void timerCallback(const ros::TimerEvent&)
 {
-  /* ---- copy the latest observation under lock ------------------------- */
   std::vector<float> obs_input;
   {
     std::lock_guard<std::mutex> lk(observation_mutex);
     obs_input.assign(observation.begin(), observation.end());   // 72 values
   }
 
-  /* ---- wrap it in an Ort::Value tensor -------------------------------- */
-
   Ort::Value input_tensor =
       Ort::Value::CreateTensor<float>(mem, obs_input.data(), obs_input.size(), input_shape, 2);
 
-  /* ---- run inference -------------------------------------------------- */
   auto outputs = sess->Run(Ort::RunOptions{nullptr},
                            in_names.data(),  &input_tensor, 1,
                            out_names.data(), 1);
@@ -171,7 +166,6 @@ int main(int argc,char** argv)
     }
   }
 
-  // 2) If none found, fail
   if (!found) {
     ROS_FATAL("No ONNX model found in %s, and fallback '%s' doesn't exist.",
               config_dir.c_str(), model_path.c_str());
