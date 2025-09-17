@@ -155,7 +155,7 @@ int main(int argc,char** argv)
   ros::init(argc,argv,"pal_policy_deployer"); ros::NodeHandle nh("~");
   
   std::string pkg_root = ros::package::getPath("pal_policy_deployer");
-  std::string config_dir = pkg_root + "/models/loco/exported/";
+  std::string config_dir = pkg_root + "/models/loco/loco_v21/exported/";
   std::string model_path;
   bool found = false;
   for (auto& entry : fs::directory_iterator(config_dir)) {
