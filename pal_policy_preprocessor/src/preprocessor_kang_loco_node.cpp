@@ -112,7 +112,7 @@ int main(int argc,char** argv)
 
   ros::Rate r(50);
 
-  obs[72] = 0.3;
+  // obs[72] = 0.3;
 
   const double period = 0.6;
   double global_phase = 0.0;
