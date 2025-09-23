@@ -10,13 +10,14 @@ class InteractiveTargetPublisher : public rclcpp::Node
 {
 public:
   InteractiveTargetPublisher();
+  void init_server();
 
 private:
-  // Publisher for the target position
+  // Publishes the target position
   rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr pub_;
 
-  // Interactive Marker server (constructed with this node's interfaces)
-  interactive_markers::InteractiveMarkerServer server_;
+  // Interactive Marker server
+  std::shared_ptr<interactive_markers::InteractiveMarkerServer> server_;
 
   void makeInteractiveMarker();
 

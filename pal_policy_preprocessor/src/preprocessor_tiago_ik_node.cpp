@@ -17,9 +17,9 @@ IKObsPublisher::IKObsPublisher()
   sub_pose_ = this->create_subscription<geometry_msgs::msg::Point>(
     "/target_position", 1, std::bind(&IKObsPublisher::poseCB, this, _1));
   sub_last_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-    "/reach_policy/last_action", 1, std::bind(&IKObsPublisher::lastCB, this, _1));
+    "/ik_policy/last_action", 1, std::bind(&IKObsPublisher::lastCB, this, _1));
 
-  pub_obs_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/reach_policy/obs", 1);
+  pub_obs_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/ik_policy/obs", 1);
 
   timer_ =
     this->create_wall_timer(
