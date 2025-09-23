@@ -5,18 +5,16 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(_Boost_PYTHON310_HEADERS "boost/python.hpp")
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(trajectory_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 
+
 # ONNX Runtime
-include_directories(
-  include
+include_directories(SYSTEM include 
   /opt/onnxruntime/include
-  /opt/onnxruntime/include/onnxruntime/core/session
 )
 link_directories(/opt/onnxruntime/lib)
 
@@ -25,8 +23,6 @@ add_executable(${PROJECT_NAME}_ik_node src/inferer_tiago_ik_node.cpp)
 ament_target_dependencies(${PROJECT_NAME}_ik_node
   rclcpp
   std_msgs
-  sensor_msgs
-  trajectory_msgs
   ament_index_cpp
 )
 

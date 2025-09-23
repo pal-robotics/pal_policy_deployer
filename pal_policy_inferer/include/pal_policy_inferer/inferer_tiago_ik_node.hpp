@@ -10,9 +10,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <std_msgs/msg/float64_multi_array.hpp>
-#include <trajectory_msgs/msg/joint_trajectory.hpp>
-#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
-#include <sensor_msgs/msg/joint_state.hpp>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <onnxruntime_cxx_api.h>
@@ -44,8 +41,7 @@ private:
   std::vector<char *> out_names_;
 
   // ROS 2 pubs/subs/timer
-  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr pub_traj_cmd_;
-  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_sub_cmd_;
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_q_desired_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_last_;
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_obs_;
   rclcpp::TimerBase::SharedPtr timer_;

@@ -50,16 +50,15 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
   }
 
   // Publishers & subscriber
-  pub_traj_cmd_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
-    "/left_leg_controller/command", 1);
-  pub_sub_cmd_ = this->create_publisher<sensor_msgs::msg::JointState>(
-    "/subscriber_controller/desired_state", 1);
+  pub_q_desired_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
+    "/pal_impedance_control/command", 1);
   pub_last_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
-    "/reach_policy/last_action",
+    "/ik_policy/last_action",
     1);
 
+
   sub_obs_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-    "/reach_policy/obs", 1,
+    "/ik_policy/obs", 1,
     std::bind(&TiagoPolicyInfererIK::obsCallback, this, std::placeholders::_1));
 
   // Timer callback 50Hz
@@ -114,64 +113,37 @@ void TiagoPolicyInfererIK::timerCallback()
 
   std::vector<double> action = {
     action_scale * static_cast<double>(y_f[0]),
-    action_scale * static_cast<double>(y_f[1]) + 0.05,
+    action_scale * static_cast<double>(y_f[1]),
     action_scale * static_cast<double>(y_f[2]),
-    action_scale * static_cast<double>(y_f[4]) - 0.05,
+    action_scale * static_cast<double>(y_f[3]),
+    action_scale * static_cast<double>(y_f[4]),
     action_scale * static_cast<double>(y_f[5]),
-    action_scale * static_cast<double>(y_f[3]) + 0.6832,
+    action_scale * static_cast<double>(y_f[6]),
   };
 
   std::vector<double> min_val = {
-    -0.2617993877991494,
-    -0.7417649320975901,
-    -0.47123889803846897,
-    0.131973,
-    -0.7417649,
-    -0.4712389,
+    -3.14159265, -3.14159265, -3.14159265,
+    -3.14159265, -3.14159265, -3.14159265,
+    -3.14159265,
   };
 
   std::vector<double> max_val = {
-    0.6981317007977318,
-    0.6632251157578453,
-    0.47123889803846897,
-    0.71416639,
-    0.6632251,
-    0.4712389
+    3.14159265, 3.14159265, 3.14159265,
+    3.14159265, 3.14159265, 3.14159265,
+    3.14159265,
   };
 
-  std::vector<double> clamped_action(6);
-  for (size_t i = 0; i < 6; ++i) {
+  std::vector<double> clamped_action(7);
+  for (size_t i = 0; i < 7; ++i) {
     clamped_action[i] = clamp(action[i], min_val[i], max_val[i]);
   }
 
-  trajectory_msgs::msg::JointTrajectory traj;
-  traj.header.stamp = this->get_clock()->now();
-  traj.joint_names = {
-    "leg_left_1_joint",
-    "leg_left_2_joint",
-    "leg_left_3_joint",
-    "leg_left_4_joint",
-    "leg_left_5_joint",
-    "leg_left_length_joint",
-  };
+  std_msgs::msg::Float64MultiArray qmsg;
+  qmsg.data = clamped_action;
+  pub_q_desired_->publish(qmsg);
 
-  trajectory_msgs::msg::JointTrajectoryPoint pt;
-  pt.positions = {
-    clamped_action[0],
-    clamped_action[1],
-    clamped_action[2],
-    clamped_action[3],
-    clamped_action[4],
-    clamped_action[5],
-  };
-  pt.time_from_start.sec = 1;
-  pt.time_from_start.nanosec = 0;
-
-  traj.points.push_back(pt);
-  pub_traj_cmd_->publish(traj);
-
-  last.data.resize(6);
-  for (size_t i = 0; i < 6; ++i) {
+  last.data.resize(7);
+  for (size_t i = 0; i < 7; ++i) {
     last.data[i] = static_cast<double>(y_f[i]);
   }
   pub_last_->publish(last);

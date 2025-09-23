@@ -1,56 +1,38 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8)
 project(pal_policy_preprocessor)
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  roslib
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+set(_Boost_PYTHON310_HEADERS "boost/python.hpp")
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
+
+
+# ONNX Runtime
+include_directories(SYSTEM include 
+)
+
+add_executable(${PROJECT_NAME}_ik_node src/preprocessor_tiago_ik_node.cpp)
+
+ament_target_dependencies(${PROJECT_NAME}_ik_node
+  rclcpp
   std_msgs
-  message_filters
-  visualization_msgs
-  interactive_markers
+  sensor_msgs
+  trajectory_msgs
+  ament_index_cpp
 )
 
-find_package(Eigen3 REQUIRED NO_MODULE)
-
-catkin_package(
-  CATKIN_DEPENDS
-    roscpp std_msgs message_filters visualization_msgs interactive_markers
+target_link_libraries(${PROJECT_NAME}_ik_node
 )
 
-########################
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} /opt/onnxruntime/include)
-include_directories(
-  include
+install(TARGETS ${PROJECT_NAME}_ik_node
+  DESTINATION lib/${PROJECT_NAME}
 )
-link_directories(/opt/onnxruntime/lib)
-########################
 
-
-add_executable(${PROJECT_NAME}_reach_node src/preprocessor_kang_reach_node.cpp)
-target_link_libraries(${PROJECT_NAME}_reach_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-add_executable(${PROJECT_NAME}_balance_node src/preprocessor_kang_balance_node.cpp)
-target_link_libraries(${PROJECT_NAME}_balance_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-add_executable(${PROJECT_NAME}_loco_node src/preprocessor_kang_loco_node.cpp)
-target_link_libraries(${PROJECT_NAME}_loco_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-# Interactive marker node for ONNX inference
-
-add_executable(${PROJECT_NAME}_interactive_node src/interactive_marker_node.cpp)
-target_link_libraries(${PROJECT_NAME}_interactive_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-
-
-add_executable(joy_twist_accumulator src/joy_twist_accumulator.cpp)
-target_link_libraries(joy_twist_accumulator ${catkin_LIBRARIES})
-add_dependencies(joy_twist_accumulator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-
-##############
-
-
-## Mark executables for installation
-install(TARGETS ${PROJECT_NAME}_reach_node ${PROJECT_NAME}_balance_node ${PROJECT_NAME}_loco_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+ament_package()
