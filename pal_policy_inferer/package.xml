@@ -2,7 +2,7 @@
 <package format="2">
   <name>pal_policy_inferer</name>
   <version>0.0.0</version>
-  <description>The pal_policy_inferer package</description>
+  <description>pal_policy_inferer package</description>
 
   <maintainer email="louislelay@pal-robotics.com">Louis Le Lay</maintainer>
 

@@ -1,55 +1,41 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8)
 project(pal_policy_inferer)
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  roslib
-  std_msgs
-  message_filters
-  visualization_msgs
-  interactive_markers
-)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-catkin_package(
-  CATKIN_DEPENDS
-    roscpp std_msgs message_filters visualization_msgs interactive_markers
-)
-find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
-########################
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} /opt/onnxruntime/include)
+# ONNX Runtime
 include_directories(
   include
+  /opt/onnxruntime/include
+  /opt/onnxruntime/include/onnxruntime/core/session
 )
 link_directories(/opt/onnxruntime/lib)
-########################
 
+add_executable(${PROJECT_NAME}_ik_node src/inferer_tiago_ik_node.cpp)
 
+ament_target_dependencies(${PROJECT_NAME}_ik_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+  trajectory_msgs
+  ament_index_cpp
+)
 
-add_executable(${PROJECT_NAME}_reach_node src/inferer_kang_reach_node.cpp)
-target_link_libraries(${PROJECT_NAME}_reach_node
-  ${catkin_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
+target_link_libraries(${PROJECT_NAME}_ik_node
   onnxruntime
 )
 
-add_executable(${PROJECT_NAME}_balance_node src/inferer_kang_balance_node.cpp)
-target_link_libraries(${PROJECT_NAME}_balance_node
-  ${catkin_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  onnxruntime
+install(TARGETS ${PROJECT_NAME}_ik_node
+  DESTINATION lib/${PROJECT_NAME}
 )
 
-add_executable(${PROJECT_NAME}_loco_node src/kang_loco_node.cpp)
-target_link_libraries(${PROJECT_NAME}_loco_node
-  ${catkin_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  onnxruntime
-)
-
-install(TARGETS ${PROJECT_NAME}_reach_node ${PROJECT_NAME}_balance_node ${PROJECT_NAME}_loco_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+ament_package()
