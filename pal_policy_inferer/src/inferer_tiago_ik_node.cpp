@@ -8,7 +8,7 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
 : rclcpp::Node("pal_policy_inferer"),
   env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
   mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)),
-  observation_(65, 0.0)
+  observation_(24, 0.0)
 {
   // Parameters
   this->declare_parameter<double>("start_delay", 0.5);
@@ -20,7 +20,7 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
 
   // Localize the ONNX model file
   std::string pkg_share = ament_index_cpp::get_package_share_directory("pal_policy_deployer");
-  std::string config_dir = (fs::path(pkg_share) / "models" / "reach" / "exported").string();
+  std::string config_dir = (fs::path(pkg_share) / "models" / "tiagopro" / "exported").string();
 
   bool found = false;
   if (fs::exists(config_dir) && fs::is_directory(config_dir)) {
@@ -44,14 +44,14 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
   {
     Ort::SessionOptions so;
     sess_.reset(new Ort::Session(env_, model_path_.c_str(), so));
-
+    RCLCPP_INFO(this->get_logger(), "debug 1");
     in_names_.push_back(sess_->GetInputNameAllocated(0, alloc_).release());
     out_names_.push_back(sess_->GetOutputNameAllocated(0, alloc_).release());
   }
 
   // Publishers & subscriber
   pub_q_desired_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
-    "/pal_impedance_control/command", 1);
+    "q_desired", 1);
   pub_last_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
     "/ik_policy/last_action",
     1);
@@ -91,11 +91,20 @@ void TiagoPolicyInfererIK::timerCallback()
   std::vector<float> obs_input;
   {
     std::lock_guard<std::mutex> lk(observation_mutex_);
-    obs_input.assign(observation_.begin(), observation_.end()); // 65 values
+    obs_input.assign(observation_.begin(), observation_.end()); // 24 values
   }
 
+  std::ostringstream oss;
+  oss << "[";
+  for (size_t i = 20; i < 23; ++i) {
+    if (i) oss << ", ";
+    oss << obs_input[i];
+  }
+  oss << "]";
+  RCLCPP_INFO(this->get_logger(), "obs: %s", oss.str().c_str());
+
   // ---- wrap it in an Ort::Value tensor
-  static constexpr int64_t input_shape[2] = {1, 65};
+  static constexpr int64_t input_shape[2] = {1, 24};
   Ort::Value input_tensor =
     Ort::Value::CreateTensor<float>(mem_, obs_input.data(), obs_input.size(), input_shape, 2);
 
@@ -111,14 +120,17 @@ void TiagoPolicyInfererIK::timerCallback()
   std_msgs::msg::Float64MultiArray last;
   constexpr float action_scale = 0.5f;
 
-  std::vector<double> action = {
-    action_scale * static_cast<double>(y_f[0]),
-    action_scale * static_cast<double>(y_f[1]),
-    action_scale * static_cast<double>(y_f[2]),
-    action_scale * static_cast<double>(y_f[3]),
-    action_scale * static_cast<double>(y_f[4]),
-    action_scale * static_cast<double>(y_f[5]),
-    action_scale * static_cast<double>(y_f[6]),
+  // post processing
+  std::vector<double> default_pose = {-0.36, -1.83, -0.47, -2.35, -0.0, -1.2, 0.0};
+
+  std::vector<double> output = {
+    default_pose[0] + action_scale * static_cast<double>(y_f[0]),
+    default_pose[1] + action_scale * static_cast<double>(y_f[1]),
+    default_pose[2] + action_scale * static_cast<double>(y_f[2]),
+    default_pose[3] + action_scale * static_cast<double>(y_f[3]),
+    default_pose[4] + action_scale * static_cast<double>(y_f[4]),
+    default_pose[5] + action_scale * static_cast<double>(y_f[5]),
+    default_pose[6] + action_scale * static_cast<double>(y_f[6]),
   };
 
   std::vector<double> min_val = {
@@ -135,7 +147,7 @@ void TiagoPolicyInfererIK::timerCallback()
 
   std::vector<double> clamped_action(7);
   for (size_t i = 0; i < 7; ++i) {
-    clamped_action[i] = clamp(action[i], min_val[i], max_val[i]);
+    clamped_action[i] = clamp(output[i], min_val[i], max_val[i]);
   }
 
   std_msgs::msg::Float64MultiArray qmsg;
@@ -151,7 +163,7 @@ void TiagoPolicyInfererIK::timerCallback()
 
 void TiagoPolicyInfererIK::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-  if (msg->data.size() != 65) {
+  if (msg->data.size() != 24) {
     return;
   }
   std::lock_guard<std::mutex> lk(observation_mutex_);

@@ -9,9 +9,6 @@ IKObsPublisher::IKObsPublisher()
   obs_[22] = 0.5;
   obs_[23] = 0.5;
 
-  // delta = action * self._config.action_scale
-  //   ctrl = self._hx_default_pose + delta
-
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", 1, std::bind(&IKObsPublisher::jsCB, this, _1));
   sub_pose_ = this->create_subscription<geometry_msgs::msg::Point>(
@@ -34,19 +31,19 @@ void IKObsPublisher::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
   obs_[0] = msg->position[8];
   obs_[1] = msg->position[9];
   obs_[2] = msg->position[10];
-  obs_[3] = msg->position[15];
-  obs_[4] = msg->position[11];
-  obs_[5] = msg->position[12];
-  obs_[6] = msg->position[21];
+  obs_[3] = msg->position[11];
+  obs_[4] = msg->position[12];
+  obs_[5] = msg->position[13];
+  obs_[6] = msg->position[14];
 
   // 7 joint velocities
   obs_[7] = msg->velocity[8];
   obs_[8] = msg->velocity[9];
   obs_[9] = msg->velocity[10];
-  obs_[10] = msg->velocity[15];
-  obs_[11] = msg->velocity[11];
-  obs_[12] = msg->velocity[12];
-  obs_[13] = msg->velocity[22];
+  obs_[10] = msg->velocity[11];
+  obs_[11] = msg->velocity[12];
+  obs_[12] = msg->velocity[13];
+  obs_[13] = msg->velocity[14];
 }
 
 void IKObsPublisher::poseCB(const geometry_msgs::msg::Point::SharedPtr msg)

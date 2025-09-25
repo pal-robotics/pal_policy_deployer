@@ -22,7 +22,7 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
 {
   // 1) Define the InteractiveMarker
   visualization_msgs::msg::InteractiveMarker int_marker;
-  int_marker.header.frame_id = "base_link";
+  int_marker.header.frame_id = "base_footprint";
   int_marker.name = "target";
   int_marker.description = "Drag to move target";
   int_marker.scale = 0.2;
