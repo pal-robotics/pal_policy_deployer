@@ -1,25 +1,31 @@
 <launch>
-  <!-- Start the preprocessor -->
+  <!-- Preprocessor -->
   <node
     pkg="pal_policy_preprocessor"
     exec="pal_policy_preprocessor_ik_node"
     name="pal_policy_preprocessor_ik"
-    output="screen"
-  />
+    output="screen">
+    <param name="use_sim_time" value="true"/>
+  </node>
 
-  <!-- Start the inferer -->
+  <!-- Inferer (does the TF transform) -->
   <node
     pkg="pal_policy_inferer"
     exec="pal_policy_inferer_ik_node"
     name="pal_policy_inferer_ik"
-    output="screen"
-  />
+    output="screen">
+    <param name="use_sim_time" value="true"/>
+    <!-- Explicitly set frames -->
+    <param name="source_frame" value="base_footprint"/>
+    <param name="target_frame" value="arm_right_root_link"/>
+  </node>
 
-  <!-- Start the interactive node -->
+  <!-- Interactive target publisher -->
   <node
     pkg="pal_policy_preprocessor"
     exec="pal_policy_preprocessor_interactive_node"
     name="pal_policy_preprocessor_interactive"
-    output="screen"
-  />
+    output="screen">
+    <param name="use_sim_time" value="true"/>
+  </node>
 </launch>

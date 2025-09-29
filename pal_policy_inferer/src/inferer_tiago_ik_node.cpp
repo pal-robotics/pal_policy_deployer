@@ -18,6 +18,10 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
     std::chrono::milliseconds(
       static_cast<int64_t>(start_delay_ * 1000)));
 
+  // TF2 buffer
+  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
   // Localize the ONNX model file
   std::string pkg_share = ament_index_cpp::get_package_share_directory("pal_policy_deployer");
   std::string config_dir = (fs::path(pkg_share) / "models" / "tiagopro" / "exported").string();
@@ -94,14 +98,50 @@ void TiagoPolicyInfererIK::timerCallback()
     obs_input.assign(observation_.begin(), observation_.end()); // 24 values
   }
 
-  std::ostringstream oss;
-  oss << "[";
-  for (size_t i = 20; i < 23; ++i) {
-    if (i) oss << ", ";
-    oss << obs_input[i];
+  if (obs_input.size() >= 24) {
+    const float raw_x = obs_input[21];
+    const float raw_y = obs_input[22];
+    const float raw_z = obs_input[23];
+    try {
+      geometry_msgs::msg::PointStamped p_in;
+      p_in.header.stamp = this->get_clock()->now();
+      p_in.header.frame_id = source_frame_;  // "base_footprint"
+      p_in.point.x = static_cast<double>(obs_input[21]);
+      p_in.point.y = static_cast<double>(obs_input[22]);
+      p_in.point.z = static_cast<double>(obs_input[23]);
+
+      geometry_msgs::msg::PointStamped p_out =
+        tf_buffer_->transform(p_in, target_frame_, tf2::durationFromSec(0.2));
+
+
+      // overwrite the obs target with the transformed point (arm frame)
+      obs_input[21] = static_cast<float>(p_out.point.x);
+      obs_input[22] = static_cast<float>(p_out.point.y);
+      obs_input[23] = static_cast<float>(p_out.point.z);
+
+      RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000,
+      "Target %s -> %s | raw=[%.3f, %.3f, %.3f]  transformed=[%.3f, %.3f, %.3f]",
+      source_frame_.c_str(), target_frame_.c_str(),
+      raw_x, raw_y, raw_z,
+      obs_input[21], obs_input[22], obs_input[23]);
+    }
+    catch (const tf2::TransformException & ex) {
+      // If TF isn’t ready, keep the original values (base frame) for this tick.
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
+                           "TF transform %s->%s failed: %s",
+                           source_frame_.c_str(), target_frame_.c_str(), ex.what());
+    }
   }
-  oss << "]";
-  RCLCPP_INFO(this->get_logger(), "obs: %s", oss.str().c_str());
+
+  // std::ostringstream oss;
+  // oss << "[";
+  // for (size_t i = 20; i < 23; ++i) {
+  //   if (i) oss << ", ";
+  //   oss << obs_input[i];
+  // }
+  // oss << "]";
+  // RCLCPP_INFO(this->get_logger(), "obs: %s", oss.str().c_str());
 
   // ---- wrap it in an Ort::Value tensor
   static constexpr int64_t input_shape[2] = {1, 24};
@@ -118,10 +158,10 @@ void TiagoPolicyInfererIK::timerCallback()
 
   // ---- publish results
   std_msgs::msg::Float64MultiArray last;
-  constexpr float action_scale = 0.5f;
+  constexpr float action_scale = 1.0f;
 
   // post processing
-  std::vector<double> default_pose = {-0.36, -1.83, -0.47, -2.35, -0.0, -1.2, 0.0};
+  std::vector<double> default_pose = {0.242, 0.002, -0.073, -0.0, -0.022, -0.009, 0.004};
 
   std::vector<double> output = {
     default_pose[0] + action_scale * static_cast<double>(y_f[0]),

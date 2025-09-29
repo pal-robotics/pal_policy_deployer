@@ -66,9 +66,6 @@ void InteractiveTargetPublisher::processFeedback(
   p.z = feedback->pose.position.z;
 
   pub_->publish(p);
-  RCLCPP_INFO(
-    this->get_logger(),
-    "Published new target: [%.3f, %.3f, %.3f]", p.x, p.y, p.z);
 
   server_->applyChanges();  // update marker server
 }

@@ -11,6 +11,13 @@
 
 #include <std_msgs/msg/float64_multi_array.hpp>
 
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2/exceptions.h>
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <onnxruntime_cxx_api.h>
 
@@ -45,6 +52,12 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_last_;
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_obs_;
   rclcpp::TimerBase::SharedPtr timer_;
+
+  // TF2
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  const std::string source_frame_{"base_footprint"};
+  const std::string target_frame_{"arm_right_1_link"};
 
   // Observation buffer
   std::vector<double> observation_;
