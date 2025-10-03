@@ -1,4 +1,4 @@
-# pal_policy_deployer v0.0.0
+# pal_policy_deployer
 
 **WIP:** Currently, only 3 policies are available, and only for Kang.
 
