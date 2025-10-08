@@ -14,10 +14,10 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp std_msgs message_filters visualization_msgs interactive_markers
 )
-
+find_package(Eigen3 REQUIRED NO_MODULE)
 
 ########################
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} /opt/onnxruntime/include)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} /opt/onnxruntime/include)
 include_directories(
   include
 )
@@ -42,7 +42,7 @@ target_link_libraries(${PROJECT_NAME}_balance_node
   onnxruntime
 )
 
-add_executable(${PROJECT_NAME}_loco_node src/inferer_kang_loco_node.cpp)
+add_executable(${PROJECT_NAME}_loco_node src/kang_loco_node.cpp)
 target_link_libraries(${PROJECT_NAME}_loco_node
   ${catkin_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARY}

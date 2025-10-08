@@ -1,11 +1,11 @@
 <launch>
   <!-- Start the preprocessor -->
-  <node
+  <!-- <node
     pkg="pal_policy_preprocessor"
     type="pal_policy_preprocessor_loco_node"
     name="pal_policy_preprocessor_loco"
     output="screen"
-  />
+  /> -->
 
   <node
     pkg="pal_policy_inferer"

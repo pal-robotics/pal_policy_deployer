@@ -25,6 +25,7 @@
   <depend>visualization_msgs</depend>
   <depend>interactive_markers</depend>
   <depend>sensor_msgs</depend>
+  <depend>eigen</depend>
 
   <export>
 

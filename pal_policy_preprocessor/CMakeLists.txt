@@ -10,13 +10,15 @@ find_package(catkin REQUIRED COMPONENTS
   interactive_markers
 )
 
+find_package(Eigen3 REQUIRED NO_MODULE)
+
 catkin_package(
   CATKIN_DEPENDS
     roscpp std_msgs message_filters visualization_msgs interactive_markers
 )
 
 ########################
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} /opt/onnxruntime/include)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} /opt/onnxruntime/include)
 include_directories(
   include
 )
