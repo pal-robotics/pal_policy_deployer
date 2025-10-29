@@ -8,7 +8,7 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
 : rclcpp::Node("pal_policy_inferer"),
   env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
   mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)),
-  observation_(24, 0.0)
+  observation_(28, 0.0)
 {
   // Parameters
   this->declare_parameter<double>("start_delay", 0.5);
@@ -120,7 +120,7 @@ void TiagoPolicyInfererIK::timerCallback()
     obs_input.assign(observation_.begin(), observation_.end()); // 24 values
   }
 
-  if (obs_input.size() >= 24) {
+  if (obs_input.size() >= 28) {
     const float raw_x = obs_input[21];
     const float raw_y = obs_input[22];
     const float raw_z = obs_input[23];
@@ -157,7 +157,7 @@ void TiagoPolicyInfererIK::timerCallback()
   }
 
   // ---- wrap it in an Ort::Value tensor
-  static constexpr int64_t input_shape[2] = {1, 24};
+  static constexpr int64_t input_shape[2] = {1, 28};
   Ort::Value input_tensor =
     Ort::Value::CreateTensor<float>(mem_, obs_input.data(), obs_input.size(), input_shape, 2);
 
@@ -218,7 +218,7 @@ void TiagoPolicyInfererIK::timerCallback()
 
 void TiagoPolicyInfererIK::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-  if (msg->data.size() != 24) {
+  if (msg->data.size() != 28) {
     return;
   }
   std::lock_guard<std::mutex> lk(observation_mutex_);

@@ -1,10 +1,14 @@
 #include "pal_policy_preprocessor/interactive_marker_node.hpp"
 #include <functional>
 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 InteractiveTargetPublisher::InteractiveTargetPublisher()
 : rclcpp::Node("pal_policy_preprocessor_interactive_node")
 {
-  pub_ = this->create_publisher<geometry_msgs::msg::Point>("/target_position", 10);
+  pub_pos_ = this->create_publisher<geometry_msgs::msg::Point>("/target_position", 10);
+  pub_quat_ = this->create_publisher<geometry_msgs::msg::Quaternion>("/target_orientation", 10);
 }
 
 void InteractiveTargetPublisher::init_server()
@@ -30,11 +34,16 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
   int_marker.pose.position.y = -0.197;
   int_marker.pose.position.z = 0.632;
 
+  int_marker.pose.orientation.x = 0.0;
+  int_marker.pose.orientation.y = 0.0;
+  int_marker.pose.orientation.z = 0.0;
+  int_marker.pose.orientation.w = 1.0;
+
   // 2) Control that allows 3D movement
   visualization_msgs::msg::InteractiveMarkerControl move_control;
-  move_control.name = "move_3D";
+  move_control.name = "move_rotate_3D";
   move_control.interaction_mode =
-    visualization_msgs::msg::InteractiveMarkerControl::MOVE_3D;
+    visualization_msgs::msg::InteractiveMarkerControl::MOVE_ROTATE_3D;
 
   // 3) Visual: a small green sphere
   visualization_msgs::msg::Marker sphere;
@@ -65,7 +74,13 @@ void InteractiveTargetPublisher::processFeedback(
   p.y = feedback->pose.position.y;
   p.z = feedback->pose.position.z;
 
-  pub_->publish(p);
+  pub_pos_->publish(p);
+
+  tf2::Quaternion tq;
+  tf2::fromMsg(feedback->pose.orientation, tq);
+  tq.normalize();
+  geometry_msgs::msg::Quaternion q = tf2::toMsg(tq);
+  pub_quat_->publish(q);
 
   server_->applyChanges();  // update marker server
 }

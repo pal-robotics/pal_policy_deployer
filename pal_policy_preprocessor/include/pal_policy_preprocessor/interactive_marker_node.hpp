@@ -14,7 +14,8 @@ public:
 
 private:
   // Publishes the target position
-  rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr pub_;
+  rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr pub_pos_;
+  rclcpp::Publisher<geometry_msgs::msg::Quaternion>::SharedPtr pub_quat_;
 
   // Interactive Marker server
   std::shared_ptr<interactive_markers::InteractiveMarkerServer> server_;

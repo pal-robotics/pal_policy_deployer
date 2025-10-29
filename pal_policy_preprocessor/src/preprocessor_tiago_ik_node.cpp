@@ -2,17 +2,24 @@
 using std::placeholders::_1;
 
 IKObsPublisher::IKObsPublisher()
-: rclcpp::Node("onnx_input_publisher"), obs_(24, 0.0)
+: rclcpp::Node("onnx_input_publisher"), obs_(28, 0.0)
 {
   // initial target (x, y, z)
   obs_[21] = 0.292;
   obs_[22] = -0.197;
   obs_[23] = 0.632;
 
+  obs_[24] = 0.0f;
+  obs_[25] = 0.0f;
+  obs_[26] = 0.0f;
+  obs_[27] = 1.0f;
+
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", 1, std::bind(&IKObsPublisher::jsCB, this, _1));
   sub_pose_ = this->create_subscription<geometry_msgs::msg::Point>(
     "/target_position", 1, std::bind(&IKObsPublisher::poseCB, this, _1));
+  sub_quat_ = this->create_subscription<geometry_msgs::msg::Quaternion>(
+    "/target_orientation", 1, std::bind(&IKObsPublisher::quatCB, this, _1));
   sub_last_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "/ik_policy/last_action", 1, std::bind(&IKObsPublisher::lastCB, this, _1));
 
@@ -52,6 +59,15 @@ void IKObsPublisher::poseCB(const geometry_msgs::msg::Point::SharedPtr msg)
   obs_[21] = msg->x;
   obs_[22] = msg->y;
   obs_[23] = msg->z;
+}
+
+void IKObsPublisher::quatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
+{
+  // quaternion x,y,z,w -> obs_[24..27]
+  obs_[24] = msg->x;
+  obs_[25] = msg->y;
+  obs_[26] = msg->z;
+  obs_[27] = msg->w;
 }
 
 void IKObsPublisher::lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr a)

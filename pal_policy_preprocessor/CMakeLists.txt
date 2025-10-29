@@ -14,6 +14,8 @@ find_package(ament_index_cpp REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 include_directories(include SYSTEM) 
 
@@ -33,6 +35,8 @@ ament_target_dependencies(${PROJECT_NAME}_interactive_node
   visualization_msgs
   interactive_markers
   geometry_msgs 
+  tf2_geometry_msgs
+  tf2 
 )
 
 install(TARGETS
