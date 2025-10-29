@@ -5,9 +5,9 @@ IKObsPublisher::IKObsPublisher()
 : rclcpp::Node("onnx_input_publisher"), obs_(24, 0.0)
 {
   // initial target (x, y, z)
-  obs_[21] = 0.5;
-  obs_[22] = 0.5;
-  obs_[23] = 0.5;
+  obs_[21] = 0.292;
+  obs_[22] = -0.197;
+  obs_[23] = 0.632;
 
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", 1, std::bind(&IKObsPublisher::jsCB, this, _1));
@@ -28,22 +28,22 @@ IKObsPublisher::IKObsPublisher()
 void IKObsPublisher::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
   // 7 joint positions
-  obs_[0] = msg->position[8];
-  obs_[1] = msg->position[9];
-  obs_[2] = msg->position[10];
-  obs_[3] = msg->position[11];
-  obs_[4] = msg->position[12];
-  obs_[5] = msg->position[13];
-  obs_[6] = msg->position[14];
+  obs_[0] = msg->position[7];
+  obs_[1] = msg->position[8];
+  obs_[2] = msg->position[9];
+  obs_[3] = msg->position[10];
+  obs_[4] = msg->position[11];
+  obs_[5] = msg->position[12];
+  obs_[6] = msg->position[13];
 
   // 7 joint velocities
-  obs_[7] = msg->velocity[8];
-  obs_[8] = msg->velocity[9];
-  obs_[9] = msg->velocity[10];
-  obs_[10] = msg->velocity[11];
-  obs_[11] = msg->velocity[12];
-  obs_[12] = msg->velocity[13];
-  obs_[13] = msg->velocity[14];
+  obs_[7] = msg->velocity[7];
+  obs_[8] = msg->velocity[8];
+  obs_[9] = msg->velocity[9];
+  obs_[10] = msg->velocity[10];
+  obs_[11] = msg->velocity[11];
+  obs_[12] = msg->velocity[12];
+  obs_[13] = msg->velocity[13];
 }
 
 void IKObsPublisher::poseCB(const geometry_msgs::msg::Point::SharedPtr msg)

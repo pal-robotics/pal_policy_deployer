@@ -18,6 +18,9 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/exceptions.h>
 
+#include <tf2_ros/static_transform_broadcaster.h>
+
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <onnxruntime_cxx_api.h>
 
@@ -56,8 +59,11 @@ private:
   // TF2
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  const std::string source_frame_{"base_footprint"};
-  const std::string target_frame_{"arm_right_1_link"};
+  std::string target_frame_{"arm_right_1_link"};
+  std::string source_frame_{"base_footprint"};
+  std::string initial_frame_{"arm_right_1_link_initial"};
+
+  std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
 
   // Observation buffer
   std::vector<double> observation_;

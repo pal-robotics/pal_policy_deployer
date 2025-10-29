@@ -26,9 +26,9 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
   int_marker.name = "target";
   int_marker.description = "Drag to move target";
   int_marker.scale = 0.2;
-  int_marker.pose.position.x = 0.025;
-  int_marker.pose.position.y = 0.141;
-  int_marker.pose.position.z = -0.898;
+  int_marker.pose.position.x = 0.292;
+  int_marker.pose.position.y = -0.197;
+  int_marker.pose.position.z = 0.632;
 
   // 2) Control that allows 3D movement
   visualization_msgs::msg::InteractiveMarkerControl move_control;

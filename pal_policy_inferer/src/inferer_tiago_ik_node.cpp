@@ -22,6 +22,28 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
+  static_broadcaster_ = std::make_unique<tf2_ros::StaticTransformBroadcaster>(this);
+
+  try {
+    auto t0 = tf_buffer_->lookupTransform(
+      source_frame_,             // "base_footprint"
+      target_frame_,             // "arm_right_1_link"
+      tf2::TimePointZero,        // latest available
+      tf2::durationFromSec(1.0));
+
+    geometry_msgs::msg::TransformStamped static_tf = t0;
+    static_tf.header.stamp = this->get_clock()->now();
+    static_tf.child_frame_id = initial_frame_;  // "arm_right_1_link_initial"
+
+    static_broadcaster_->sendTransform(static_tf);
+
+    target_frame_ = initial_frame_;
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_FATAL(this->get_logger(), "Failed to capture initial TF: %s", ex.what());
+    return;
+  }
+
+
   // Localize the ONNX model file
   std::string pkg_share = ament_index_cpp::get_package_share_directory("pal_policy_deployer");
   std::string config_dir = (fs::path(pkg_share) / "models" / "tiagopro" / "exported").string();
@@ -48,14 +70,14 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
   {
     Ort::SessionOptions so;
     sess_.reset(new Ort::Session(env_, model_path_.c_str(), so));
-    RCLCPP_INFO(this->get_logger(), "debug 1");
+    // RCLCPP_INFO(this->get_logger(), "debug 1");
     in_names_.push_back(sess_->GetInputNameAllocated(0, alloc_).release());
     out_names_.push_back(sess_->GetOutputNameAllocated(0, alloc_).release());
   }
 
   // Publishers & subscriber
   pub_q_desired_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
-    "q_desired", 1);
+    "pal_impedance_control_right/q_desired", 1); // publish to controller
   pub_last_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
     "/ik_policy/last_action",
     1);
@@ -91,7 +113,7 @@ void TiagoPolicyInfererIK::timerCallback()
 {
   if (!ready_) {return;}
 
-  // ---- copy the latest observation under lock
+  // copy the latest observation under lock
   std::vector<float> obs_input;
   {
     std::lock_guard<std::mutex> lk(observation_mutex_);
@@ -119,29 +141,20 @@ void TiagoPolicyInfererIK::timerCallback()
       obs_input[22] = static_cast<float>(p_out.point.y);
       obs_input[23] = static_cast<float>(p_out.point.z);
 
-      RCLCPP_INFO_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000,
-      "Target %s -> %s | raw=[%.3f, %.3f, %.3f]  transformed=[%.3f, %.3f, %.3f]",
-      source_frame_.c_str(), target_frame_.c_str(),
-      raw_x, raw_y, raw_z,
-      obs_input[21], obs_input[22], obs_input[23]);
-    }
-    catch (const tf2::TransformException & ex) {
+      // RCLCPP_INFO_THROTTLE(
+      //   this->get_logger(), *this->get_clock(), 1000,
+      //   "Target %s -> %s | raw=[%.3f, %.3f, %.3f]  transformed=[%.3f, %.3f, %.3f]",
+      //   source_frame_.c_str(), target_frame_.c_str(),
+      //   raw_x, raw_y, raw_z,
+      //   obs_input[21], obs_input[22], obs_input[23]);
+    } catch (const tf2::TransformException & ex) {
       // If TF isn’t ready, keep the original values (base frame) for this tick.
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
-                           "TF transform %s->%s failed: %s",
-                           source_frame_.c_str(), target_frame_.c_str(), ex.what());
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 2000,
+        "TF transform %s->%s failed: %s",
+        source_frame_.c_str(), target_frame_.c_str(), ex.what());
     }
   }
-
-  // std::ostringstream oss;
-  // oss << "[";
-  // for (size_t i = 20; i < 23; ++i) {
-  //   if (i) oss << ", ";
-  //   oss << obs_input[i];
-  // }
-  // oss << "]";
-  // RCLCPP_INFO(this->get_logger(), "obs: %s", oss.str().c_str());
 
   // ---- wrap it in an Ort::Value tensor
   static constexpr int64_t input_shape[2] = {1, 24};
@@ -158,31 +171,33 @@ void TiagoPolicyInfererIK::timerCallback()
 
   // ---- publish results
   std_msgs::msg::Float64MultiArray last;
-  constexpr float action_scale = 1.0f;
+  constexpr float action_scale = 0.5f;
+
+  std::array<double, 7> q{};
+  for (size_t i = 0; i < 7; ++i) {
+    q[i] = static_cast<double>(obs_input[i]);  // qpos[0..6]
+  }
 
   // post processing
-  std::vector<double> default_pose = {0.242, 0.002, -0.073, -0.0, -0.022, -0.009, 0.004};
+  // std::vector<double> default_pose = {0.242, 0.002, -0.073, -0.0, -0.022, -0.009, 0.004};
+  std::vector<double> default_pose = {0.36, -1.83, -0.47, -2.35, -0.0, -1.2, 0.0};
 
   std::vector<double> output = {
-    default_pose[0] + action_scale * static_cast<double>(y_f[0]),
-    default_pose[1] + action_scale * static_cast<double>(y_f[1]),
-    default_pose[2] + action_scale * static_cast<double>(y_f[2]),
-    default_pose[3] + action_scale * static_cast<double>(y_f[3]),
-    default_pose[4] + action_scale * static_cast<double>(y_f[4]),
-    default_pose[5] + action_scale * static_cast<double>(y_f[5]),
-    default_pose[6] + action_scale * static_cast<double>(y_f[6]),
+    q[0] + action_scale * static_cast<double>(y_f[0]),
+    q[1] + action_scale * static_cast<double>(y_f[1]),
+    q[2] + action_scale * static_cast<double>(y_f[2]),
+    q[3] + action_scale * static_cast<double>(y_f[3]),
+    q[4] + action_scale * static_cast<double>(y_f[4]),
+    q[5] + action_scale * static_cast<double>(y_f[5]),
+    q[6] + action_scale * static_cast<double>(y_f[6]),
   };
 
   std::vector<double> min_val = {
-    -3.14159265, -3.14159265, -3.14159265,
-    -3.14159265, -3.14159265, -3.14159265,
-    -3.14159265,
+    -4.71239, -2.44346, -2.61799, -2.44346, -1.5708, -1.88496, -2.61799,
   };
 
   std::vector<double> max_val = {
-    3.14159265, 3.14159265, 3.14159265,
-    3.14159265, 3.14159265, 3.14159265,
-    3.14159265,
+    0.523599, 1.13446, 2.61799, 1.13446, 3.66519, 3.00197, 2.61799,
   };
 
   std::vector<double> clamped_action(7);
@@ -196,7 +211,7 @@ void TiagoPolicyInfererIK::timerCallback()
 
   last.data.resize(7);
   for (size_t i = 0; i < 7; ++i) {
-    last.data[i] = static_cast<double>(y_f[i]);
+    last.data[i] = action_scale * static_cast<double>(y_f[i]);
   }
   pub_last_->publish(last);
 }
