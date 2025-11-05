@@ -27,19 +27,10 @@ void HermiteInterpolator::onNewSample(const std_msgs::msg::Float64MultiArray::Sh
   double now = this->get_clock()->now().seconds();
 
   // Keep a rolling buffer of ~10 samples (~0.2 s at 50 Hz)
-  buffer_.push_back({now, msg->data[0]});
+  std::vector<double> values(msg->data.begin(), msg->data.end());
+  buffer_.push_back({now, std::move(values)});
   if (buffer_.size() > 10) {
     buffer_.pop_front();
-  }
-
-  {
-    std::ostringstream oss;
-    oss << "Buffer (" << buffer_.size() << "): ";
-    std::size_t idx = 0;
-    for (const auto & s : buffer_) {
-      oss << "[" << idx++ << "] t=" << s.time << " v=" << s.value << "  ";
-    }
-    RCLCPP_INFO(get_logger(), "%s", oss.str().c_str());
   }
 
   if (buffer_.size() < 5) {
@@ -47,21 +38,34 @@ void HermiteInterpolator::onNewSample(const std_msgs::msg::Float64MultiArray::Sh
   }
 
   std::vector<double> times;
-  std::vector<double> values;
   times.reserve(buffer_.size());
-  values.reserve(buffer_.size());
 
   for (const auto & s : buffer_) {
     times.push_back(s.time);
-    values.push_back(s.value);
   }
 
   // (re)build PCHIP interpolator
-  auto interp = pchip(std::move(times), std::move(values));
-  current_pchip_ = std::make_unique<boost::math::interpolators::pchip<std::vector<double>>>(
-    std::move(interp));
+  std::vector<std::unique_ptr<boost::math::interpolators::pchip<std::vector<double>>>> interps;
+  interps.reserve(buffer_.front().values.size());
+
+  for (std::size_t j = 0; j < buffer_.front().values.size(); ++j) {
+    // collect dimension j values
+    std::vector<double> values_j;
+    values_j.reserve(buffer_.size());
+    for (const auto & s : buffer_) {
+      values_j.push_back(s.values[j]);
+    }
 
 
+    std::vector<double> times_j = times;
+
+    auto interp_j = boost::math::interpolators::pchip(std::move(times_j), std::move(values_j));
+    interps.push_back(
+      std::make_unique<boost::math::interpolators::pchip<std::vector<double>>>(
+        std::move(interp_j)));
+  }
+
+  current_pchip_ = std::move(interps);
   t_min_ = buffer_.front().time;
   t_max_ = buffer_.back().time;
 }
@@ -71,7 +75,7 @@ void HermiteInterpolator::publishInterpolated()
   std::lock_guard<std::mutex> lock(mutex_);
   double now = this->get_clock()->now().seconds();
 
-  if (!current_pchip_) {
+  if (current_pchip_.empty()) {
     return;
   }
 
@@ -79,10 +83,13 @@ void HermiteInterpolator::publishInterpolated()
     return;
   }
 
-  double interpolated_value = (*current_pchip_)(now);
-
   std_msgs::msg::Float64MultiArray output_msg;
-  output_msg.data.push_back(interpolated_value);
+  output_msg.data.reserve(current_pchip_.size());
+
+  for (auto & interp : current_pchip_) {
+    output_msg.data.push_back((*interp)(now));
+  }
+
   pub_interpolator_->publish(output_msg);
 
 }

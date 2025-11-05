@@ -26,12 +26,13 @@ private:
   struct Sample
   {
     double time;   // when we received it
-    double value;  // the actual setpoint
+    std::vector<double> values;  // the actual setpoint
   };
 
   std::deque<Sample> buffer_;
   std::mutex mutex_;
-  std::unique_ptr<boost::math::interpolators::pchip<std::vector<double>>> current_pchip_;
+  std::vector<std::unique_ptr<boost::math::interpolators::pchip<std::vector<double>>>>
+  current_pchip_;
 
   double t_min_{0.0};
   double t_max_{0.0};
