@@ -30,14 +30,14 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
   int_marker.name = "target";
   int_marker.description = "Drag to move target";
   int_marker.scale = 0.2;
-  int_marker.pose.position.x = 0.292;
-  int_marker.pose.position.y = -0.197;
-  int_marker.pose.position.z = 0.632;
+  int_marker.pose.position.x = 0.272;
+  int_marker.pose.position.y = -0.209;
+  int_marker.pose.position.z = 0.560;
 
-  int_marker.pose.orientation.x = 0.0;
-  int_marker.pose.orientation.y = 0.0;
-  int_marker.pose.orientation.z = 0.0;
-  int_marker.pose.orientation.w = 1.0;
+  int_marker.pose.orientation.x = 0.188;
+  int_marker.pose.orientation.y = 0.004;
+  int_marker.pose.orientation.z = 0.979;
+  int_marker.pose.orientation.w = -0.078;
 
   // 2) Control that allows 3D movement
   visualization_msgs::msg::InteractiveMarkerControl move_control;
@@ -45,18 +45,39 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
   move_control.interaction_mode =
     visualization_msgs::msg::InteractiveMarkerControl::MOVE_ROTATE_3D;
 
-  // 3) Visual: a small green sphere
-  visualization_msgs::msg::Marker sphere;
-  sphere.type = visualization_msgs::msg::Marker::SPHERE;
-  sphere.scale.x = 0.1;
-  sphere.scale.y = 0.1;
-  sphere.scale.z = 0.1;
-  sphere.color.r = 0.0f;
-  sphere.color.g = 1.0f;
-  sphere.color.b = 0.0f;
-  sphere.color.a = 1.0f;
+  double arrow_length = int_marker.scale * 0.8;
+  double arrow_radius = int_marker.scale * 0.05;
 
-  move_control.markers.push_back(sphere);
+  // X-axis arrow (red)
+  visualization_msgs::msg::Marker x_arrow;
+  x_arrow.type = visualization_msgs::msg::Marker::ARROW;
+  x_arrow.scale.x = arrow_length;
+  x_arrow.scale.y = arrow_radius;
+  x_arrow.scale.z = arrow_radius;
+  x_arrow.color.r = 1.0f;
+  x_arrow.color.g = 0.0f;
+  x_arrow.color.b = 0.0f;
+  x_arrow.color.a = 1.0f;
+  x_arrow.pose.orientation.w = 1.0;
+  move_control.markers.push_back(x_arrow);
+
+  // Y-axis arrow (green)
+  visualization_msgs::msg::Marker y_arrow = x_arrow;
+  y_arrow.color.r = 0.0f;
+  y_arrow.color.g = 1.0f;
+  y_arrow.pose.orientation.w = 0.7071;
+  y_arrow.pose.orientation.z = 0.7071;  // rotate 90° around Z
+  move_control.markers.push_back(y_arrow);
+
+  // Z-axis arrow (blue)
+  visualization_msgs::msg::Marker z_arrow = x_arrow;
+  z_arrow.color.r = 0.0f;
+  z_arrow.color.g = 0.0f;
+  z_arrow.color.b = 1.0f;
+  z_arrow.pose.orientation.w = 0.7071;
+  z_arrow.pose.orientation.y = -0.7071; // rotate 90° around Y
+  move_control.markers.push_back(z_arrow);
+
   move_control.always_visible = true;
   int_marker.controls.push_back(move_control);
 

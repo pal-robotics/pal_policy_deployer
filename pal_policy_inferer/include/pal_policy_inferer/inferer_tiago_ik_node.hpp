@@ -24,6 +24,8 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <onnxruntime_cxx_api.h>
 
+#include "pal_policy_inferer/lowpass_filter.hpp"
+
 class TiagoPolicyInfererIK : public rclcpp::Node
 {
 public:
@@ -69,8 +71,10 @@ private:
   std::vector<double> observation_;
   std::mutex observation_mutex_;
 
+  std::array<LowPassFilter, 7> joint_filters_;
+
   // Params/state
-  double start_delay_{0.5};
+  double start_delay_ {0.5};
   std::string model_path_;
   bool ready_{false};
 };

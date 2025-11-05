@@ -5,14 +5,14 @@ IKObsPublisher::IKObsPublisher()
 : rclcpp::Node("onnx_input_publisher"), obs_(28, 0.0)
 {
   // initial target (x, y, z)
-  obs_[21] = 0.292;
-  obs_[22] = -0.197;
-  obs_[23] = 0.632;
+  obs_[21] = 0.272;
+  obs_[22] = -0.209;
+  obs_[23] = 0.560;
 
-  obs_[24] = 0.0f;
-  obs_[25] = 0.0f;
-  obs_[26] = 0.0f;
-  obs_[27] = 1.0f;
+  obs_[24] = 0.188f;
+  obs_[25] = 0.004f;
+  obs_[26] = 0.979f;
+  obs_[27] = -0.078f;
 
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", 1, std::bind(&IKObsPublisher::jsCB, this, _1));

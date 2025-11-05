@@ -1,6 +1,7 @@
 #include "pal_policy_inferer/inferer_tiago_ik_node.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+
 namespace fs = std::filesystem;
 
 // NODE CLASS
@@ -23,6 +24,12 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   static_broadcaster_ = std::make_unique<tf2_ros::StaticTransformBroadcaster>(this);
+
+  const double cutoff_hz = 5.0;
+  const double dt = 0.02;
+  for (size_t i = 0; i < 7; ++i) {
+    joint_filters_[i] = LowPassFilter(cutoff_hz, dt);
+  }
 
   try {
     auto t0 = tf_buffer_->lookupTransform(
@@ -77,7 +84,7 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
 
   // Publishers & subscriber
   pub_q_desired_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
-    "pal_impedance_control_right/q_desired", 1); // publish to controller
+    "/q_des_raw", 1); // publish to controller
   pub_last_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
     "/ik_policy/last_action",
     1);
@@ -117,7 +124,7 @@ void TiagoPolicyInfererIK::timerCallback()
   std::vector<float> obs_input;
   {
     std::lock_guard<std::mutex> lk(observation_mutex_);
-    obs_input.assign(observation_.begin(), observation_.end()); // 24 values
+    obs_input.assign(observation_.begin(), observation_.end());
   }
 
   if (obs_input.size() >= 28) {
@@ -207,12 +214,19 @@ void TiagoPolicyInfererIK::timerCallback()
 
   std_msgs::msg::Float64MultiArray qmsg;
   qmsg.data = clamped_action;
+  std::vector<double> filtered_action(7);
+  for (size_t i = 0; i < 7; ++i) {
+    // update() takes a single float/double
+    filtered_action[i] = joint_filters_[i].update(static_cast<float>(clamped_action[i]));
+  }
+  qmsg.data = filtered_action;
   pub_q_desired_->publish(qmsg);
 
   last.data.resize(7);
   for (size_t i = 0; i < 7; ++i) {
     last.data[i] = action_scale * static_cast<double>(y_f[i]);
   }
+
   pub_last_->publish(last);
 }
 
