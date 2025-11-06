@@ -30,12 +30,16 @@ private:
   };
 
   std::deque<Sample> buffer_;
+
+  double last_seg_start_time_{0.0};
+  double last_seg_end_time_{0.0};
+  int last_seg_step_{0};
+  static constexpr int UPSAMPLE_FACTOR = 20;
+
   std::mutex mutex_;
   std::vector<std::unique_ptr<boost::math::interpolators::pchip<std::vector<double>>>>
   current_pchip_;
 
-  double t_min_{0.0};
-  double t_max_{0.0};
 
   void onNewSample(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
   void publishInterpolated();

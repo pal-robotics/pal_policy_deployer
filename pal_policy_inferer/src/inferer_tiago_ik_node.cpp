@@ -25,7 +25,7 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
 
   static_broadcaster_ = std::make_unique<tf2_ros::StaticTransformBroadcaster>(this);
 
-  const double cutoff_hz = 5.0;
+  const double cutoff_hz = 2.0;
   const double dt = 0.02;
   for (size_t i = 0; i < 7; ++i) {
     joint_filters_[i] = LowPassFilter(cutoff_hz, dt);
