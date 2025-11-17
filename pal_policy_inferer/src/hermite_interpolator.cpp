@@ -27,8 +27,28 @@ void HermiteInterpolator::onNewSample(const std_msgs::msg::Float64MultiArray::Sh
   std::lock_guard<std::mutex> lock(mutex_);
   double now = this->get_clock()->now().seconds();
 
-  // Keep a rolling buffer of ~10 samples (~0.2 s at 50 Hz)
   std::vector<double> values(msg->data.begin(), msg->data.end());
+
+  // If we already have at least one sample, check if this one is "new"
+  if (!buffer_.empty()) {
+    const auto & last = buffer_.back();
+    const double eps = 1e-9;
+
+    bool all_close = true;
+    // Assuming fixed-size vectors, so values.size() == last.values.size()
+    for (std::size_t i = 0; i < values.size(); ++i) {
+      if (std::fabs(values[i] - last.values[i]) > eps) {
+        all_close = false; // found a meaningful difference
+        break;
+      }
+    }
+
+    if (all_close) {
+      // No new information, just another ZOH sample
+      return;
+    }
+  }
+
   buffer_.push_back({now, std::move(values)});
   if (buffer_.size() > 10) {
     buffer_.pop_front();
@@ -85,7 +105,6 @@ void HermiteInterpolator::publishInterpolated()
   double dt = last.time - prev.time;
 
   double t_eval = now - dt;
-  double t_min = buffer_.front().time;
   double t_max = buffer_.back().time;
   if (t_eval > t_max) {t_eval = t_max;}
 
