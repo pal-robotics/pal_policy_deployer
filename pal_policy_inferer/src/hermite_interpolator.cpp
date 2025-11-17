@@ -68,12 +68,6 @@ void HermiteInterpolator::onNewSample(const std_msgs::msg::Float64MultiArray::Sh
 
   current_pchip_ = std::move(interps);
 
-  auto & last = buffer_.back();
-  auto & prev = buffer_[buffer_.size() - 2];
-  last_seg_start_time_ = prev.time;
-  last_seg_end_time_ = last.time;
-
-  last_seg_step_ = 0;
 }
 
 void HermiteInterpolator::publishInterpolated()
@@ -84,11 +78,16 @@ void HermiteInterpolator::publishInterpolated()
   if (current_pchip_.empty()) {
     return;
   }
-  double seg_start = last_seg_start_time_;
-  double seg_end = last_seg_end_time_;
-  double seg_duration = seg_end - seg_start;
-  double dt = seg_duration / static_cast<double>(UPSAMPLE_FACTOR); // ~1 ms
-  double t_eval = seg_start + dt * static_cast<double>(last_seg_step_);
+
+
+  const auto & last = buffer_.back();
+  const auto & prev = buffer_[buffer_.size() - 2];
+  double dt = last.time - prev.time;
+
+  double t_eval = now - dt;
+  double t_min = buffer_.front().time;
+  double t_max = buffer_.back().time;
+  if (t_eval > t_max) {t_eval = t_max;}
 
   std_msgs::msg::Float64MultiArray output_msg;
   output_msg.data.reserve(current_pchip_.size());
@@ -99,8 +98,6 @@ void HermiteInterpolator::publishInterpolated()
 
   pub_interpolator_->publish(output_msg);
 
-  // advance to next 1 kHz step, clamp at the end
-  last_seg_step_ += 1;
 
 }
 
