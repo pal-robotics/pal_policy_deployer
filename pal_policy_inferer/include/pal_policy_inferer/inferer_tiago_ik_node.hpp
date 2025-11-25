@@ -63,7 +63,7 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::string target_frame_{"arm_right_1_link"};
   std::string source_frame_{"base_footprint"};
-  std::string initial_frame_{"arm_right_1_link_initial"};
+  std::string initial_frame_{"arm_right_root_link"};
 
   std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
 

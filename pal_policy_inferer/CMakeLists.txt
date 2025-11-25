@@ -36,21 +36,21 @@ ament_target_dependencies(${PROJECT_NAME}_ik_node
   tf2_geometry_msgs
 )
 
-add_executable(hermite_interpolator_node
-  src/hermite_interpolator.cpp
-)
+# add_executable(hermite_interpolator_node
+#   src/hermite_interpolator.cpp
+# )
 
-ament_target_dependencies(hermite_interpolator_node
-  rclcpp
-  std_msgs
-)
+# ament_target_dependencies(hermite_interpolator_node
+#   rclcpp
+#   std_msgs
+# )
 
 target_link_libraries(${PROJECT_NAME}_ik_node
   onnxruntime
 )
 
 install(TARGETS ${PROJECT_NAME}_ik_node
-  hermite_interpolator_node
+  # hermite_interpolator_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

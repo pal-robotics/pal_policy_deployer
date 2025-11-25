@@ -5,14 +5,15 @@ IKObsPublisher::IKObsPublisher()
 : rclcpp::Node("onnx_input_publisher"), obs_(28, 0.0)
 {
   // initial target (x, y, z)
-  obs_[21] = 0.272;
-  obs_[22] = -0.209;
-  obs_[23] = 0.560;
+  obs_[21] = 0.27627;
+  obs_[22] = -0.20836;
+  obs_[23] = 0.54072;
 
-  obs_[24] = 0.188f;
-  obs_[25] = 0.004f;
-  obs_[26] = 0.979f;
-  obs_[27] = -0.078f;
+  obs_[24] = -0.078344f;
+  obs_[25] = 0.21066f;
+  obs_[26] = 0.0041078f;
+  obs_[27] = 0.97441f;
+
 
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", 1, std::bind(&IKObsPublisher::jsCB, this, _1));
@@ -63,11 +64,11 @@ void IKObsPublisher::poseCB(const geometry_msgs::msg::Point::SharedPtr msg)
 
 void IKObsPublisher::quatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {
-  // quaternion x,y,z,w -> obs_[24..27]
-  obs_[24] = msg->x;
-  obs_[25] = msg->y;
-  obs_[26] = msg->z;
-  obs_[27] = msg->w;
+  // ROS gives (x,y,z,w), policy expects (w,x,y,z)
+  obs_[24] = msg->w;
+  obs_[25] = msg->x;
+  obs_[26] = msg->y;
+  obs_[27] = msg->z;
 }
 
 void IKObsPublisher::lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr a)

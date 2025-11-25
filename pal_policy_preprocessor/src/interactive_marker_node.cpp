@@ -34,10 +34,10 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
   int_marker.pose.position.y = -0.209;
   int_marker.pose.position.z = 0.560;
 
-  int_marker.pose.orientation.x = 0.188;
-  int_marker.pose.orientation.y = 0.004;
-  int_marker.pose.orientation.z = 0.979;
-  int_marker.pose.orientation.w = -0.078;
+  int_marker.pose.orientation.x = 0.21066;
+  int_marker.pose.orientation.y = 0.0041078;
+  int_marker.pose.orientation.z = 0.97441;
+  int_marker.pose.orientation.w = -0.078344;
 
   // 2) Control that allows 3D movement
   visualization_msgs::msg::InteractiveMarkerControl move_control;
