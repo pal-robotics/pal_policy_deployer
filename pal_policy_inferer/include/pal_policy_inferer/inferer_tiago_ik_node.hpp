@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -8,29 +10,16 @@
 #include <filesystem>
 
 #include <rclcpp/rclcpp.hpp>
-
 #include <std_msgs/msg/float64_multi_array.hpp>
-
-#include <geometry_msgs/msg/point.hpp>
-#include <geometry_msgs/msg/point_stamped.hpp>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <tf2/exceptions.h>
-
-#include <tf2_ros/static_transform_broadcaster.h>
-
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <onnxruntime_cxx_api.h>
-
-#include "pal_policy_inferer/lowpass_filter.hpp"
 
 class TiagoPolicyInfererIK : public rclcpp::Node
 {
 public:
   TiagoPolicyInfererIK();
-  ~TiagoPolicyInfererIK() override;        // <-- add this
+  ~TiagoPolicyInfererIK() override;
 
   bool is_ready() const {return ready_;}
 
@@ -53,28 +42,18 @@ private:
   std::vector<char *> out_names_;
 
   // ROS 2 pubs/subs/timer
-  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_q_desired_;
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_q_desired_right_;
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_q_desired_left_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_last_;
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_obs_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  // TF2
-  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  std::string target_frame_{"arm_right_1_link"};
-  std::string source_frame_{"base_footprint"};
-  std::string initial_frame_{"arm_right_root_link"};
-
-  std::unique_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
-
-  // Observation buffer
+  // Observation buffer (59-dim: torso + left + right + vel + actions + commands)
   std::vector<double> observation_;
   std::mutex observation_mutex_;
 
-  std::array<LowPassFilter, 7> joint_filters_;
-
   // Params/state
-  double start_delay_ {0.5};
+  double start_delay_{0.5};
   std::string model_path_;
   bool ready_{false};
 };

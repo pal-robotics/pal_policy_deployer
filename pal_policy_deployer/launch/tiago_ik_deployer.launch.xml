@@ -20,14 +20,6 @@
     <param name="target_frame" value="arm_right_root_link"/>
   </node>
 
-  <!-- <node
-    pkg="pal_policy_inferer"
-    exec="hermite_interpolator_node"
-    name="hermite_interpolator"
-    output="screen">
-    <param name="use_sim_time" value="true"/>
-  </node> -->
-
   <!-- Interactive target publisher -->
   <node
     pkg="pal_policy_preprocessor"
