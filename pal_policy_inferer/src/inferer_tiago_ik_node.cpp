@@ -101,17 +101,24 @@ void TiagoPolicyInfererIK::timerCallback()
   std_msgs::msg::Float64MultiArray last;
   constexpr float action_scale = 0.5f;
 
-  double q_torso = static_cast<double>(obs_input[0]);
+  // === ACTION LAYOUT (matching sim):
+  // y_f[0]      -> torso
+  // y_f[1..7]   -> left arm  (7 joints)
+  // y_f[8..14]  -> right arm (7 joints)
+
+  // Torso command (delta or absolute according to how the policy was trained)
   double torso_cmd = action_scale * static_cast<double>(y_f[0]);
 
   std::array<double, 7> q_left{};
   std::array<double, 7> q_right{};
 
+  // Current joint positions, if you need them for absolute commands / logging
   for (size_t i = 0; i < 7; ++i) {
-    q_left[i] = static_cast<double>(obs_input[1 + i]);
-    q_right[i] = static_cast<double>(obs_input[8 + i]);
+    q_left[i] = static_cast<double>(obs_input[1 + i]);   // torso at index 0, then left 7
+    q_right[i] = static_cast<double>(obs_input[8 + i]);  // then right 7
   }
 
+  // Raw policy commands (scaled)
   std::vector<double> left_cmd(7);
   std::vector<double> right_cmd(7);
 
@@ -120,6 +127,7 @@ void TiagoPolicyInfererIK::timerCallback()
     right_cmd[i] = action_scale * static_cast<double>(y_f[8 + i]);   // y_f[8..14]
   }
 
+  // Joint limits
   std::vector<double> min_val = {
     -4.71239, -2.44346, -2.61799, -2.44346, -1.5708, -1.88496, -2.61799,
   };
@@ -136,6 +144,7 @@ void TiagoPolicyInfererIK::timerCallback()
     clamped_right[i] = clamp(right_cmd[i], min_val[i], max_val[i]);
   }
 
+  // Publish desired joint positions for both arms
   std_msgs::msg::Float64MultiArray qmsg_left;
   qmsg_left.data = clamped_left;
   pub_q_desired_left_->publish(qmsg_left);
@@ -144,25 +153,26 @@ void TiagoPolicyInfererIK::timerCallback()
   qmsg_right.data = clamped_right;
   pub_q_desired_right_->publish(qmsg_right);
 
-  // Publish last actions: torso + 7 left + 7 right = 15
+  // === Publish last actions: torso + 7 left + 7 right = 15 ===
   // (pure deltas, without current position)
   last.data.resize(15);
 
-  // Torso
+  // Torso: index 0
   last.data[0] = torso_cmd;
 
-  // Left arm
+  // Left arm: indices 1..7
   for (size_t i = 0; i < 7; ++i) {
     last.data[1 + i] = left_cmd[i];
   }
 
-  // Right arm
+  // Right arm: indices 8..14
   for (size_t i = 0; i < 7; ++i) {
     last.data[8 + i] = right_cmd[i];
   }
 
   pub_last_->publish(last);
 }
+
 
 void TiagoPolicyInfererIK::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
