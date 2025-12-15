@@ -29,7 +29,11 @@ ament_target_dependencies(${PROJECT_NAME}_ik_node
   rclcpp
   std_msgs
   ament_index_cpp
-  geometry_msgs          
+  geometry_msgs   
+  tf2                     
+  tf2_ros                 
+  tf2_geometry_msgs
+       
 )
 
 target_link_libraries(${PROJECT_NAME}_ik_node
