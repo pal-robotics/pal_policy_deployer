@@ -24,6 +24,13 @@ private:
 
   std::vector<double> obs_;
 
+  // name -> index map for JointState
+  std::unordered_map<std::string, size_t> joint_index_;
+  std::vector<std::string> last_js_names_;
+  std::vector<std::string> expected_joint_names_;
+  bool joint_map_ready_{false};
+
+
   rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr sub_left_pos_;
   rclcpp::Subscription<geometry_msgs::msg::Quaternion>::SharedPtr sub_left_quat_;
   rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr sub_right_pos_;

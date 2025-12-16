@@ -106,30 +106,34 @@ void TiagoPolicyInfererIK::timerCallback()
   // y_f[1..7]   -> left arm  (7 joints)
   // y_f[8..14]  -> right arm (7 joints)
 
-  // Torso command (currently not published to any q_desired topic in this file,
-  // but kept here for completeness / debugging)
-  double torso_cmd = action_scale * static_cast<double>(y_f[0]);
+  // ---- Default positions (baseline) ----
+  const double torso_default = 0.1;
+  const std::vector<double> left_default = {0.358, -1.827, 0.470, -2.341, 0.000, -1.201, 0.000};
+  const std::vector<double> right_default = {-0.358, -1.827, -0.470, -2.341, 0.000, -1.201, 0.000};
+
+  // Torso command (not published in this file, but kept for completeness/debug)
+  double torso_cmd = torso_default + action_scale * static_cast<double>(y_f[0]);
   (void)torso_cmd;
 
   std::vector<double> left_cmd(7);
   std::vector<double> right_cmd(7);
 
-  // Left arm: y_f[1..7]
+  // Left arm: y_f[1..7] as DELTA around default
   for (size_t i = 0; i < 7; ++i) {
-    left_cmd[i] = action_scale * static_cast<double>(y_f[1 + i]);
+    left_cmd[i] = left_default[i] + action_scale * static_cast<double>(y_f[1 + i]);
   }
 
-  // Right arm: y_f[8..14]
+  // Right arm: y_f[8..14] as DELTA around default
   for (size_t i = 0; i < 7; ++i) {
-    right_cmd[i] = action_scale * static_cast<double>(y_f[8 + i]);
+    right_cmd[i] = right_default[i] + action_scale * static_cast<double>(y_f[8 + i]);
   }
 
   // Joint limits
-  std::vector<double> min_val = {
+  const std::vector<double> min_val = {
     -4.71239, -2.44346, -2.61799, -2.44346, -1.5708, -1.88496, -2.61799,
   };
 
-  std::vector<double> max_val = {
+  const std::vector<double> max_val = {
     0.523599, 1.13446, 2.61799, 1.13446, 3.66519, 3.00197, 2.61799,
   };
 
@@ -143,32 +147,32 @@ void TiagoPolicyInfererIK::timerCallback()
 
   // Publish desired joint positions for both arms
   std_msgs::msg::Float64MultiArray qmsg_left;
-  qmsg_left.data = clamped_left;
+  qmsg_left.data = clamped_left;   // publish clamped absolute targets
   pub_q_desired_left_->publish(qmsg_left);
 
   std_msgs::msg::Float64MultiArray qmsg_right;
-  qmsg_right.data = clamped_right;
+  qmsg_right.data = clamped_right; // publish clamped absolute targets
   pub_q_desired_right_->publish(qmsg_right);
 
   // === Publish last actions: torso (1) + left (7) + right (7) = 15 ===
   // last.data layout:
-  //   [0]      = torso
-  //   [1..7]   = left arm
-  //   [8..14]  = right arm
+  //   [0]      = torso delta (scaled)
+  //   [1..7]   = left arm deltas (scaled)
+  //   [8..14]  = right arm deltas (scaled)
   std_msgs::msg::Float64MultiArray last;
   last.data.resize(15);
 
-  // Torso: index 0
-  last.data[0] = action_scale * static_cast<double>(y_f[0]);
+  // Torso delta (scaled)
+  last.data[0] = static_cast<double>(y_f[0]);
 
-  // Left arm: indices 1..7
+  // Left deltas (scaled)
   for (size_t i = 0; i < 7; ++i) {
-    last.data[1 + i] = action_scale * static_cast<double>(y_f[1 + i]);
+    last.data[1 + i] = static_cast<double>(y_f[1 + i]);
   }
 
-  // Right arm: indices 8..14
+  // Right deltas (scaled)
   for (size_t i = 0; i < 7; ++i) {
-    last.data[8 + i] = action_scale * static_cast<double>(y_f[8 + i]);
+    last.data[8 + i] = static_cast<double>(y_f[8 + i]);
   }
 
   pub_last_->publish(last);

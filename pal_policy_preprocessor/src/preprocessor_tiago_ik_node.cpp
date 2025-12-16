@@ -2,31 +2,52 @@
 
 #include <algorithm>
 #include <chrono>
+#include <string>
+#include <vector>
 
 using std::placeholders::_1;
+
+// ---- OBSERVATION JOINT ORDER (same style as ROS1) ----
+// 15 joints total: torso + left(7) + right(7)
+static const std::vector<std::string> obs_order = {
+  "torso_lift_joint",
+  "arm_left_1_joint", "arm_left_2_joint", "arm_left_3_joint", "arm_left_4_joint",
+  "arm_left_5_joint", "arm_left_6_joint", "arm_left_7_joint",
+  "arm_right_1_joint", "arm_right_2_joint", "arm_right_3_joint", "arm_right_4_joint",
+  "arm_right_5_joint", "arm_right_6_joint", "arm_right_7_joint"
+};
+
+// ---- DEFAULT JOINT POSITIONS ----
+static const double torso_default = 0.1;
+
+static const std::vector<double> left_default = {
+  0.358, -1.827, 0.470, -2.341, 0.000, -1.201, 0.000
+};
+
+static const std::vector<double> right_default = {
+  -0.358, -1.827, -0.470, -2.341, 0.000, -1.201, 0.000
+};
 
 IKObsPublisher::IKObsPublisher()
 : rclcpp::Node("onnx_input_publisher"), obs_(59, 0.0)
 {
   // === Initial left command pose (xyz, qw, qx, qy, qz) ===
-  obs_[45] = 0.27634;       // left x
-  obs_[46] = 0.20833;       // left y
-  obs_[47] = 0.54071;       // left z
-
-  obs_[48] = 0.078844;      // left qw
-  obs_[49] = 0.21089;       // left qx
-  obs_[50] = 0.00096864;    // left qy
-  obs_[51] = 0.97432;       // left qz
+  obs_[45] = 0.27634;
+  obs_[46] = 0.20833;
+  obs_[47] = 0.54071;
+  obs_[48] = 0.078844;
+  obs_[49] = 0.21089;
+  obs_[50] = 0.00096864;
+  obs_[51] = 0.97432;
 
   // === Initial right command pose (xyz, qw, qx, qy, qz) ===
-  obs_[52] = 0.27627;       // right x
-  obs_[53] = -0.20836;      // right y
-  obs_[54] = 0.54072;       // right z
-
-  obs_[55] = -0.078344;     // right qw
-  obs_[56] = 0.21066;       // right qx
-  obs_[57] = 0.0041078;     // right qy
-  obs_[58] = 0.97441;       // right qz
+  obs_[52] = 0.27627;
+  obs_[53] = -0.20836;
+  obs_[54] = 0.54072;
+  obs_[55] = -0.078344;
+  obs_[56] = 0.21066;
+  obs_[57] = 0.0041078;
+  obs_[58] = 0.97441;
 
   // Subscriptions
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
@@ -45,65 +66,55 @@ IKObsPublisher::IKObsPublisher()
   sub_last_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "/ik_policy/last_action", 1, std::bind(&IKObsPublisher::lastCB, this, _1));
 
-  // Publisher
-  pub_obs_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/ik_policy/obs", 1);
+  pub_obs_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
+    "/ik_policy/obs", 1);
 
-  // Timer at 50 Hz (20 ms)
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(20),
     std::bind(&IKObsPublisher::onTimer, this));
 }
 
-// JointState callback: fill positions and velocities
-// New layout:
-//   obs[ 0..14]  = positions    (left, right, torso)
-//   obs[15..29]  = velocities   (left, right, torso)
+// JointState callback
 void IKObsPublisher::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
-  // Safety check (optional, but helps avoid out-of-range)
-  if (msg->position.size() <= 18 || msg->velocity.size() <= 18) {
+  if (msg->name.empty() || msg->position.size() != msg->name.size()) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 2000,
-      "JointState message too small: pos size %zu, vel size %zu",
-      msg->position.size(), msg->velocity.size());
+      "JointState invalid");
     return;
   }
 
+  for (size_t k = 0; k < obs_order.size(); ++k) {
+    const auto & wanted = obs_order[k];
 
-  // === Positions: torso, left, right ===
-  obs_[0] = msg->position[18];          // torso
+    for (size_t i = 0; i < msg->name.size(); ++i) {
+      if (msg->name[i] == wanted) {
 
-  // left arm -> obs_[1..7]
-  for (int i = 0; i < 7; ++i) {
-    obs_[1 + i] = msg->position[i];
-  }
+        double q = msg->position[i];
 
-  // right arm -> obs_[8..14]
-  for (int i = 0; i < 7; ++i) {
-    obs_[8 + i] = msg->position[7 + i];
-  }
+        // ---- subtract default pose ----
+        if (k == 0) {
+          q -= torso_default;
+        } else if (k >= 1 && k <= 7) {
+          q -= left_default[k - 1];
+        } else if (k >= 8 && k <= 14) {
+          q -= right_default[k - 8];
+        }
 
-  // === Velocities: torso, left, right ===
-  obs_[15] = msg->velocity[18];         // torso
+        obs_[k] = q;
 
-  // left arm -> obs_[16..22]
-  for (int i = 0; i < 7; ++i) {
-    obs_[16 + i] = msg->velocity[i];
-  }
-
-  // right arm -> obs_[23..29]
-  for (int i = 0; i < 7; ++i) {
-    obs_[23 + i] = msg->velocity[7 + i];
+        if (!msg->velocity.empty()) {
+          obs_[15 + k] = msg->velocity[i];
+        }
+        break;
+      }
+    }
   }
 }
 
-// Target pose callbacks: commands (left/right)
-// Layout:
-//   obs[45..51] = left  command (xyz, qw, qx, qy, qz)
-//   obs[52..58] = right command (xyz, qw, qx, qy, qz)
+// ---- Target pose callbacks ----
 void IKObsPublisher::leftPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 {
-  // Left command position -> obs_[45..47]
   obs_[45] = msg->x;
   obs_[46] = msg->y;
   obs_[47] = msg->z;
@@ -111,8 +122,6 @@ void IKObsPublisher::leftPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 
 void IKObsPublisher::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {
-  // ROS gives (x,y,z,w), policy expects (w,x,y,z)
-  // Left command orientation -> obs_[48..51]
   obs_[48] = msg->w;
   obs_[49] = msg->x;
   obs_[50] = msg->y;
@@ -121,7 +130,6 @@ void IKObsPublisher::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr 
 
 void IKObsPublisher::rightPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 {
-  // Right command position -> obs_[52..54]
   obs_[52] = msg->x;
   obs_[53] = msg->y;
   obs_[54] = msg->z;
@@ -129,8 +137,6 @@ void IKObsPublisher::rightPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 
 void IKObsPublisher::rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {
-  // ROS gives (x,y,z,w), policy expects (w,x,y,z)
-  // Right command orientation -> obs_[55..58]
   obs_[55] = msg->w;
   obs_[56] = msg->x;
   obs_[57] = msg->y;
@@ -139,18 +145,11 @@ void IKObsPublisher::rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr
 
 void IKObsPublisher::lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr a)
 {
-  // Actions for 15 joints -> obs_[30..44]
-  // Layout in /ik_policy/last_action:
-  //   [0..6]   = left arm
-  //   [7..13]  = right arm
-  //   [14]     = torso
   const size_t N = std::min<std::size_t>(15, a->data.size());
-
   for (size_t i = 0; i < N; ++i) {
     obs_[30 + i] = a->data[i];
   }
 }
-
 
 void IKObsPublisher::onTimer()
 {
