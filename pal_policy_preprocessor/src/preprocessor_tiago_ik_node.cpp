@@ -32,18 +32,18 @@ IKObsPublisher::IKObsPublisher()
 : rclcpp::Node("onnx_input_publisher"), obs_(59, 0.0)
 {
   // === Initial left command pose (xyz, qw, qx, qy, qz) ===
-  obs_[45] = 0.27634;
-  obs_[46] = 0.20833;
-  obs_[47] = 0.54071;
+  obs_[45] = 0.337962;
+  obs_[46] = 0.203562;
+  obs_[47] = 0.677366;
   obs_[48] = 0.078844;
   obs_[49] = 0.21089;
   obs_[50] = 0.00096864;
   obs_[51] = 0.97432;
 
   // === Initial right command pose (xyz, qw, qx, qy, qz) ===
-  obs_[52] = 0.27627;
-  obs_[53] = -0.20836;
-  obs_[54] = 0.54072;
+  obs_[52] = 0.337751;
+  obs_[53] = -0.202208;
+  obs_[54] = 0.677405;
   obs_[55] = -0.078344;
   obs_[56] = 0.21066;
   obs_[57] = 0.0041078;
