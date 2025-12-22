@@ -11,7 +11,7 @@ TiagoPolicyInfererIK::TiagoPolicyInfererIK()
 : rclcpp::Node("pal_policy_inferer"),
   env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
   mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)),
-  observation_(59, 0.0)
+  observation_(67, 0.0)
 {
   this->declare_parameter<double>("start_delay", 0.5);
   this->get_parameter("start_delay", start_delay_);
@@ -88,7 +88,7 @@ void TiagoPolicyInfererIK::timerCallback()
     obs_input.assign(observation_.begin(), observation_.end());
   }
 
-  static constexpr int64_t input_shape[2] = {1, 59};
+  static constexpr int64_t input_shape[2] = {1, 67};
   Ort::Value input_tensor =
     Ort::Value::CreateTensor<float>(mem_, obs_input.data(), obs_input.size(), input_shape, 2);
 
@@ -180,7 +180,7 @@ void TiagoPolicyInfererIK::timerCallback()
 
 void TiagoPolicyInfererIK::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-  if (msg->data.size() != 59) {
+  if (msg->data.size() != 67) {
     return;
   }
   std::lock_guard<std::mutex> lk(observation_mutex_);
