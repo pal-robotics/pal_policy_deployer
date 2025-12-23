@@ -80,14 +80,14 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
     int_marker.scale = 0.2;
 
     // Initial pose (you can tune these)
-    int_marker.pose.position.x = 0.272;
-    int_marker.pose.position.y = 0.209;   // mirror sign from original
-    int_marker.pose.position.z = 0.560;
+    int_marker.pose.position.x = 0.337962;
+    int_marker.pose.position.y = 0.203562;   // mirror sign from original
+    int_marker.pose.position.z = 0.677366;
 
-    int_marker.pose.orientation.x = 0.21066;
-    int_marker.pose.orientation.y = 0.0041078;
-    int_marker.pose.orientation.z = 0.97441;
-    int_marker.pose.orientation.w = -0.078344;
+    int_marker.pose.orientation.x = 0.21089;
+    int_marker.pose.orientation.y = 0.00096864;
+    int_marker.pose.orientation.z = 0.97432;
+    int_marker.pose.orientation.w = 0.078844;
 
     visualization_msgs::msg::InteractiveMarkerControl left_control = move_control;
     left_control.markers.clear();
@@ -111,9 +111,9 @@ void InteractiveTargetPublisher::makeInteractiveMarker()
     int_marker.scale = 0.2;
 
     // Initial pose (original single marker values)
-    int_marker.pose.position.x = 0.272;
-    int_marker.pose.position.y = -0.209;
-    int_marker.pose.position.z = 0.560;
+    int_marker.pose.position.x = 0.337751;
+    int_marker.pose.position.y = -0.202208;
+    int_marker.pose.position.z = 0.677405;
 
     int_marker.pose.orientation.x = 0.21066;
     int_marker.pose.orientation.y = 0.0041078;

@@ -5,7 +5,7 @@
     exec="pal_policy_preprocessor_ik_node"
     name="pal_policy_preprocessor_ik"
     output="screen">
-    <param name="use_sim_time" value="true"/>
+    <param name="use_sim_time" value="false"/>
   </node>
 
   <!-- Inferer (does the TF transform) -->
@@ -14,7 +14,7 @@
     exec="pal_policy_inferer_ik_node"
     name="pal_policy_inferer_ik"
     output="screen">
-    <param name="use_sim_time" value="true"/>
+    <param name="use_sim_time" value="false"/>
     <!-- Explicitly set frames -->
     <param name="source_frame" value="base_footprint"/>
     <param name="target_frame" value="arm_right_root_link"/>
@@ -26,6 +26,6 @@
     exec="pal_policy_preprocessor_interactive_node"
     name="pal_policy_preprocessor_interactive"
     output="screen">
-    <param name="use_sim_time" value="true"/>
+    <param name="use_sim_time" value="false"/>
   </node>
 </launch>
