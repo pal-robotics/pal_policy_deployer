@@ -1,23 +1,23 @@
 <launch>
+  <!-- launch argument: use true for simulation, false for real robot -->
+  <arg name="use_sim_time" default="false"/>
+
   <!-- Preprocessor -->
   <node
     pkg="pal_policy_preprocessor"
     exec="pal_policy_preprocessor_ik_node"
     name="pal_policy_preprocessor_ik"
     output="screen">
-    <param name="use_sim_time" value="false"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 
-  <!-- Inferer (does the TF transform) -->
+  <!-- Inferer  -->
   <node
     pkg="pal_policy_inferer"
     exec="pal_policy_inferer_ik_node"
     name="pal_policy_inferer_ik"
     output="screen">
-    <param name="use_sim_time" value="false"/>
-    <!-- Explicitly set frames -->
-    <param name="source_frame" value="base_footprint"/>
-    <param name="target_frame" value="arm_right_root_link"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 
   <!-- Interactive target publisher -->
@@ -26,6 +26,6 @@
     exec="pal_policy_preprocessor_interactive_node"
     name="pal_policy_preprocessor_interactive"
     output="screen">
-    <param name="use_sim_time" value="false"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 </launch>
