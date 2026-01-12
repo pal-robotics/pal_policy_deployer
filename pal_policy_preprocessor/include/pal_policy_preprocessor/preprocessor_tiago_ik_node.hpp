@@ -1,6 +1,5 @@
 #pragma once
 
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -69,7 +68,6 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   // -------------------- State --------------------
-  mutable std::mutex mtx_;
   std::unordered_map<std::string, size_t> joint_name_to_index_;
 
   std::vector<double> buff_joint_pos_;    // size N (relative to default)

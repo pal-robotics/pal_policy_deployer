@@ -309,8 +309,6 @@ void IKObsPublisher::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
     return;
   }
 
-  std::lock_guard<std::mutex> lk(mtx_);
-
   const bool has_full_velocity =
     (!msg->velocity.empty() && msg->velocity.size() == msg->name.size());
 
@@ -335,7 +333,6 @@ void IKObsPublisher::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
 
 void IKObsPublisher::leftPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lk(mtx_);
   buff_command_[0] = msg->x;
   buff_command_[1] = msg->y;
   buff_command_[2] = msg->z;
@@ -343,7 +340,6 @@ void IKObsPublisher::leftPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 
 void IKObsPublisher::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lk(mtx_);
   // policy expects (w, x, y, z)
   buff_command_[3] = msg->w;
   buff_command_[4] = msg->x;
@@ -353,7 +349,6 @@ void IKObsPublisher::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr 
 
 void IKObsPublisher::rightPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lk(mtx_);
   buff_command_[7] = msg->x;
   buff_command_[8] = msg->y;
   buff_command_[9] = msg->z;
@@ -361,7 +356,6 @@ void IKObsPublisher::rightPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 
 void IKObsPublisher::rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lk(mtx_);
   // policy expects (w, x, y, z)
   buff_command_[10] = msg->w;
   buff_command_[11] = msg->x;
@@ -371,7 +365,6 @@ void IKObsPublisher::rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr
 
 void IKObsPublisher::lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lk(mtx_);
 
   const size_t n = std::min(buff_last_action_.size(), msg->data.size());
   for (size_t i = 0; i < n; ++i) {
@@ -384,7 +377,6 @@ void IKObsPublisher::onTimer()
   std_msgs::msg::Float64MultiArray m;
 
   {
-    std::lock_guard<std::mutex> lk(mtx_);
     m.data = buildObservationVector();
 
     if (static_cast<int>(m.data.size()) != config_.obs_dim) {
