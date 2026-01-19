@@ -15,32 +15,29 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
-# ONNX Runtime
 include_directories(SYSTEM include 
   /opt/onnxruntime/include
 )
 link_directories(/opt/onnxruntime/lib)
 
-add_executable(${PROJECT_NAME}_ik_node src/inferer_tiago_ik_node.cpp
+add_executable(${PROJECT_NAME}_node src/onnx.cpp
   )
 
-
-ament_target_dependencies(${PROJECT_NAME}_ik_node
+ament_target_dependencies(${PROJECT_NAME}_node
   rclcpp
   std_msgs
   ament_index_cpp
   geometry_msgs   
   tf2                     
   tf2_ros                 
-  tf2_geometry_msgs
-       
+  tf2_geometry_msgs      
 )
 
-target_link_libraries(${PROJECT_NAME}_ik_node
+target_link_libraries(${PROJECT_NAME}_node
   onnxruntime
 )
 
-install(TARGETS ${PROJECT_NAME}_ik_node
+install(TARGETS ${PROJECT_NAME}_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

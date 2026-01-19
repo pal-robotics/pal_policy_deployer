@@ -23,12 +23,13 @@ include_directories(SYSTEM include
 )
 link_directories(/opt/onnxruntime/lib)
 
-# -------------------- IK preprocessor node --------------------
-add_executable(${PROJECT_NAME}_ik_node
-  src/preprocessor_tiago_ik_node.cpp
+# -------------------- Preprocessor node --------------------
+add_executable(${PROJECT_NAME}_node
+  src/preprocessor.cpp
+  src/preprocessor_tiago_reaching.cpp
 )
 
-ament_target_dependencies(${PROJECT_NAME}_ik_node
+ament_target_dependencies(${PROJECT_NAME}_node
   rclcpp
   std_msgs
   sensor_msgs
@@ -36,29 +37,28 @@ ament_target_dependencies(${PROJECT_NAME}_ik_node
   ament_index_cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_ik_node
+target_link_libraries(${PROJECT_NAME}_node
   onnxruntime
 )
 
 # -------------------- Interactive marker node --------------------
-add_executable(${PROJECT_NAME}_interactive_node
-  src/interactive_marker_node.cpp
-)
+# add_executable(${PROJECT_NAME}_interactive_node
+#   src/interactive_marker_node.cpp
+# )
 
-ament_target_dependencies(${PROJECT_NAME}_interactive_node
-  rclcpp
-  std_msgs
-  visualization_msgs
-  interactive_markers
-  geometry_msgs
-  tf2
-  tf2_geometry_msgs
-  ament_index_cpp
-)
+# ament_target_dependencies(${PROJECT_NAME}_interactive_node
+#   rclcpp
+#   std_msgs
+#   visualization_msgs
+#   interactive_markers
+#   geometry_msgs
+#   tf2
+#   tf2_geometry_msgs
+#   ament_index_cpp
+# )
 
 install(TARGETS
-  ${PROJECT_NAME}_ik_node
-  ${PROJECT_NAME}_interactive_node
+  ${PROJECT_NAME}_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
