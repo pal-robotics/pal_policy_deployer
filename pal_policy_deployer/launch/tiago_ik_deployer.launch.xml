@@ -5,8 +5,8 @@
   <!-- Preprocessor -->
   <node
     pkg="pal_policy_preprocessor"
-    exec="pal_policy_preprocessor_ik_node"
-    name="pal_policy_preprocessor_ik"
+    exec="pal_policy_preprocessor_node"
+    name="pal_policy_preprocessor"
     output="screen">
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
@@ -14,17 +14,17 @@
   <!-- Inferer  -->
   <node
     pkg="pal_policy_inferer"
-    exec="pal_policy_inferer_ik_node"
-    name="pal_policy_inferer_ik"
+    exec="pal_policy_inferer_node"
+    name="pal_policy_inferer"
     output="screen">
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
 
   <!-- Interactive target publisher -->
   <node
-    pkg="pal_policy_preprocessor"
-    exec="pal_policy_preprocessor_interactive_node"
-    name="pal_policy_preprocessor_interactive"
+    pkg="pal_policy_postprocessor"
+    exec="pal_policy_postprocessor_node"
+    name="pal_policy_postprocessor"
     output="screen">
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>

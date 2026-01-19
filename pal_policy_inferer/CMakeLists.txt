@@ -11,9 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
+
 
 include_directories(SYSTEM include 
   /opt/onnxruntime/include
@@ -27,10 +25,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   rclcpp
   std_msgs
   ament_index_cpp
-  geometry_msgs   
-  tf2                     
-  tf2_ros                 
-  tf2_geometry_msgs      
+  geometry_msgs      
 )
 
 target_link_libraries(${PROJECT_NAME}_node

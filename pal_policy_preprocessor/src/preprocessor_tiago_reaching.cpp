@@ -37,7 +37,7 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
     "/right_target_orientation", 1, std::bind(&TiagoReaching::rightQuatCB, this, _1));
 
   sub_last_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-    "/ik_policy/last_action", 1, std::bind(&TiagoReaching::lastCB, this, _1));
+    "/reaching_tiago/last_action", 1, std::bind(&TiagoReaching::lastCB, this, _1));
 
   run(std::chrono::milliseconds(20));
 }

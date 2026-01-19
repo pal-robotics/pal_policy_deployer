@@ -23,6 +23,7 @@
   <!-- Aggregate the other packages at runtime -->
   <exec_depend>pal_policy_inferer</exec_depend>
   <exec_depend>pal_policy_preprocessor</exec_depend>
+  <exec_depend>pal_policy_postprocessor</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
