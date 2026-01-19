@@ -60,10 +60,8 @@ void TiagoReaching::parseMetadataIntoConfig(
 {
   config_.joint_names = splitString(mm.at("joint_names"), ',');
   config_.default_joint_pos = parseDoubles(mm.at("default_joint_pos"));
+  config_.action_scale = parseDoubles(mm.at("action_scale"));
 
-  if (mm.count("action_scale")) {
-    config_.action_scale = parseDoubles(mm.at("action_scale"));
-  }
 
   for (const auto & jn : config_.joint_names) {
     if (!isExcludedJoint(jn, excluded_action_joints)) {
@@ -75,7 +73,7 @@ void TiagoReaching::parseMetadataIntoConfig(
   const int M = static_cast<int>(config_.action_joint_names.size());
 
   config_.action_dim = M;
-  config_.obs_dim = (2 * N) + M + DIM_CMD;
+  config_.obs_dim = (2 * N) + M + DIM_CMD; // TO DO >> can we infer this from ONNX model?
 }
 
 void TiagoReaching::initBuffersFromConfig()

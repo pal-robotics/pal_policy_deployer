@@ -24,13 +24,6 @@ void TiagoReachingPostprocessor::postprocessAndPublish(
   // y[1..7]   left arm
   // y[8..14]  right arm
 
-  if (y.size() < 15) {
-    RCLCPP_WARN(
-      this->get_logger(),
-      "Postprocessor: action vector too small (%zu)", y.size());
-    return;
-  }
-
   constexpr double action_scale = 0.5;
 
   const std::vector<double> left_default =
