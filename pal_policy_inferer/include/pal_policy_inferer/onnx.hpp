@@ -26,12 +26,6 @@ public:
   bool is_ready() const {return ready_;}
 
 private:
-  template<class T>
-  static constexpr const T & clamp(const T & v, const T & lo, const T & hi)
-  {
-    return v < lo ? lo : (hi < v ? hi : v);
-  }
-
   void timerCallback();
   void obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
 
@@ -42,6 +36,8 @@ private:
   Ort::AllocatorWithDefaultOptions alloc_;
   std::vector<char *> in_names_;
   std::vector<char *> out_names_;
+
+  size_t expected_obs_dim_{0};
 
   // ROS 2 pubs/subs/timer
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_output_;

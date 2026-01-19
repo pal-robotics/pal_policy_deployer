@@ -14,7 +14,11 @@ protected:
   void postprocessAndPublish(const std::vector<double> & y) override;
 
 private:
-  static double clamp(double v, double lo, double hi);
+  template<class T>
+  static constexpr const T & clamp(const T & v, const T & lo, const T & hi)
+  {
+    return v < lo ? lo : (hi < v ? hi : v);
+  }
 
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_q_left_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_q_right_;

@@ -16,11 +16,6 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
     "/reaching_tiago/last_action", 1);
 }
 
-double TiagoReachingPostprocessor::clamp(double v, double lo, double hi)
-{
-  return std::max(lo, std::min(v, hi));
-}
-
 void TiagoReachingPostprocessor::postprocessAndPublish(
   const std::vector<double> & y)
 {

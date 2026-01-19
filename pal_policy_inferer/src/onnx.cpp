@@ -7,8 +7,7 @@ namespace fs = std::filesystem;
 OnnxInferer::OnnxInferer()
 : rclcpp::Node("pal_policy_inferer"),
   env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
-  mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)),
-  observation_(67, 0.0)
+  mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault))
 {
   this->declare_parameter<double>("start_delay", 0.5);
   this->get_parameter("start_delay", start_delay_);
@@ -16,7 +15,7 @@ OnnxInferer::OnnxInferer()
   rclcpp::sleep_for(std::chrono::milliseconds(static_cast<int64_t>(start_delay_ * 1000)));
 
   std::string pkg_share = ament_index_cpp::get_package_share_directory("pal_policy_deployer");
-  std::string config_dir = (fs::path(pkg_share) / "models" / "tiagopro" / "exported").string(); // TO DO move to deployer pkg
+  std::string config_dir = (fs::path(pkg_share) / "models" / "tiagopro" / "exported").string(); // TO DO move to deployer pkg?
 
   bool found = false;
   if (fs::exists(config_dir) && fs::is_directory(config_dir)) {
@@ -39,6 +38,19 @@ OnnxInferer::OnnxInferer()
   {
     Ort::SessionOptions so;
     sess_.reset(new Ort::Session(env_, model_path_.c_str(), so));
+
+    Ort::TypeInfo input_info = sess_->GetInputTypeInfo(0);
+    auto tensor_info = input_info.GetTensorTypeAndShapeInfo();
+
+    std::vector<int64_t> dims = tensor_info.GetShape();
+    if (dims.size() < 2 || dims[1] <= 0) {
+      throw std::runtime_error("ONNX obs dim is dynamic/invalid (expected fixed [1, N])");
+    }
+    obs_dim_ = static_cast<size_t>(dims[1]);
+
+    std::lock_guard<std::mutex> lk(observation_mutex_);
+    observation_.assign(obs_dim_, 0.0);
+
     in_names_.push_back(sess_->GetInputNameAllocated(0, alloc_).release());
     out_names_.push_back(sess_->GetOutputNameAllocated(0, alloc_).release());
   }
@@ -82,10 +94,15 @@ void OnnxInferer::timerCallback()
   }
 
 
-  static constexpr int64_t input_shape[2] = {1, 67};
+  std::array<int64_t, 2> input_shape{{
+    1,
+    static_cast<int64_t>(obs_dim_)
+  }};
+
   Ort::Value input_tensor =
     Ort::Value::CreateTensor<float>(
-    mem_, obs_input.data(), obs_input.size(), input_shape, 2);
+    mem_, obs_input.data(), obs_input.size(),
+    input_shape.data(), input_shape.size());
 
   auto outputs = sess_->Run(
     Ort::RunOptions{nullptr},
@@ -105,7 +122,7 @@ void OnnxInferer::timerCallback()
 
 void OnnxInferer::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-  if (msg->data.size() != 67) {
+  if (msg->data.size() != obs_dim_) {
     return;
   }
   std::lock_guard<std::mutex> lk(observation_mutex_);
