@@ -37,7 +37,7 @@ private:
   std::vector<char *> in_names_;
   std::vector<char *> out_names_;
 
-  size_t expected_obs_dim_{0};
+  size_t obs_dim_{0};
 
   // ROS 2 pubs/subs/timer
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_output_;

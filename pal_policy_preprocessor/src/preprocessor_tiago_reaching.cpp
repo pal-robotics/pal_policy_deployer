@@ -16,9 +16,6 @@ static const std::vector<std::string> excluded_action_joints = {
 TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
 : Preprocessor("tiago_reaching_preprocessor", options)
 {
-  const std::string model_path = resolveModelPath();
-  buildMetadataMap(model_path);
-
   parseMetadataIntoConfig(metadataMap());
   initBuffersFromConfig();
   buildJointIndexMap();

@@ -14,25 +14,9 @@ OnnxInferer::OnnxInferer()
   RCLCPP_INFO(this->get_logger(), "Waiting %.1f seconds before starting...", start_delay_);
   rclcpp::sleep_for(std::chrono::milliseconds(static_cast<int64_t>(start_delay_ * 1000)));
 
-  std::string pkg_share = ament_index_cpp::get_package_share_directory("pal_policy_deployer");
-  std::string config_dir = (fs::path(pkg_share) / "models" / "tiagopro" / "exported").string(); // TO DO >> move to deployer pkg?
-
-  bool found = false;
-  if (fs::exists(config_dir) && fs::is_directory(config_dir)) {
-    for (const auto & entry : fs::directory_iterator(config_dir)) {
-      const auto & p = entry.path();
-      if (entry.is_regular_file() && p.extension() == ".onnx") {
-        model_path_ = p.string();
-        found = true;
-        RCLCPP_INFO(this->get_logger(), "Found ONNX model: %s", model_path_.c_str());
-        break;
-      }
-    }
-  }
-
-  if (!found) {
-    RCLCPP_FATAL(this->get_logger(), "No ONNX model found in %s.", config_dir.c_str());
-    return;
+  model_path_ = this->declare_parameter<std::string>("onnx_model_path", "");
+  if (model_path_.empty()) {
+    throw std::runtime_error("onnx_model_path param not set");
   }
 
   {

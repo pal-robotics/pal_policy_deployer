@@ -18,38 +18,14 @@ Preprocessor::Preprocessor(const std::string & node_name, const rclcpp::NodeOpti
 {
   pub_obs_ =
     this->create_publisher<std_msgs::msg::Float64MultiArray>("preprocessor/obs", 1);
-}
 
-// MODEL PATH RESOLUTION >> should this go to deployer pkg?
-std::string Preprocessor::resolveModelPath()
-{
   model_path_ = this->declare_parameter<std::string>("onnx_model_path", "");
-
-  if (!model_path_.empty()) {
-    return model_path_;
+  if (model_path_.empty()) {
+    throw std::runtime_error("onnx_model_path param not set");
   }
 
-  const std::string pkg_share =
-    ament_index_cpp::get_package_share_directory("pal_policy_deployer");
+  buildMetadataMap(model_path_);
 
-  const std::string config_dir =
-    (fs::path(pkg_share) / "models" / "tiagopro" / "exported").string();
-
-  if (fs::exists(config_dir) && fs::is_directory(config_dir)) {
-    for (const auto & entry : fs::directory_iterator(config_dir)) {
-      const auto & p = entry.path();
-      if (entry.is_regular_file() && p.extension() == ".onnx") {
-        model_path_ = p.string();
-        RCLCPP_INFO(this->get_logger(), "Found ONNX model: %s", model_path_.c_str());
-        return model_path_;
-      }
-    }
-  }
-  RCLCPP_FATAL(
-    this->get_logger(),
-    "onnx_model_path not set and no .onnx found in %s",
-    config_dir.c_str());
-  throw std::runtime_error("no onnx model found");
 }
 
 // BUILD METADATA MAP

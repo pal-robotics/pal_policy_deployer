@@ -18,7 +18,6 @@ public:
   virtual ~Preprocessor() = default;
 
 protected:
-  std::string resolveModelPath();
   void buildMetadataMap(const std::string & onnx_model_path);
   const std::map<std::string, std::string> & metadataMap() const {return metadata_map_;}
 
