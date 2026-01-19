@@ -1,4 +1,4 @@
-  #include "pal_policy_postprocessor/tiago_reaching_postprocessor.hpp"
+#include "pal_policy_postprocessor/postprocessor_tiago_reaching.hpp"
 
 #include <algorithm>
 
@@ -76,4 +76,12 @@ void TiagoReachingPostprocessor::postprocessAndPublish(
   std_msgs::msg::Float64MultiArray last;
   last.data.assign(y.begin(), y.begin() + 15);
   pub_last_->publish(last);
+}
+
+int main(int argc, char ** argv)
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<TiagoReachingPostprocessor>());
+  rclcpp::shutdown();
+  return 0;
 }

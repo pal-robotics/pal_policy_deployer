@@ -7,7 +7,8 @@ namespace fs = std::filesystem;
 OnnxInferer::OnnxInferer()
 : rclcpp::Node("pal_policy_inferer"),
   env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
-  mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault))
+  mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)),
+  observation_(67, 0.0)
 {
   this->declare_parameter<double>("start_delay", 0.5);
   this->get_parameter("start_delay", start_delay_);
@@ -81,14 +82,10 @@ void OnnxInferer::timerCallback()
   }
 
 
-  std::array<int64_t, 2> input_shape{{
-    1,
-    static_cast<int64_t>(obs_input.size())
-  }};
+  static constexpr int64_t input_shape[2] = {1, 67};
   Ort::Value input_tensor =
     Ort::Value::CreateTensor<float>(
-    mem_, obs_input.data(), obs_input.size(), input_shape.data(),
-    input_shape.size());
+    mem_, obs_input.data(), obs_input.size(), input_shape, 2);
 
   auto outputs = sess_->Run(
     Ort::RunOptions{nullptr},
@@ -108,6 +105,9 @@ void OnnxInferer::timerCallback()
 
 void OnnxInferer::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
+  if (msg->data.size() != 67) {
+    return;
+  }
   std::lock_guard<std::mutex> lk(observation_mutex_);
   observation_.assign(msg->data.begin(), msg->data.end());
 }

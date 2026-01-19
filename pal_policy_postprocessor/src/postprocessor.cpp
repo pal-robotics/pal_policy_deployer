@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 // BASE CLASS IMPLEMENTATION
 Postprocessor::Postprocessor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: rclcpp::Node(node_name, options),
+: rclcpp::Node(node_name, options)
 {
   sub_output_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "/onnx/output", 1,

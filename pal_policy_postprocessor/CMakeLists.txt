@@ -17,7 +17,8 @@ include_directories(SYSTEM include
 )
 
 
-add_executable(${PROJECT_NAME}_node src/onnx.cpp
+add_executable(${PROJECT_NAME}_node src/postprocessor.cpp
+src/postprocessor_tiago_reaching.cpp
   )
 
 ament_target_dependencies(${PROJECT_NAME}_node
