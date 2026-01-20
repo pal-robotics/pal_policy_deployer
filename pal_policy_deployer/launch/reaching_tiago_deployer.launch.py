@@ -1,32 +1,42 @@
+from dataclasses import dataclass
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, GroupAction
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+from launch_pal.arg_utils import LaunchArgumentsBase
 
-def generate_launch_description():
+# TO DO: load model path from config file  
+DEFAULT_MODEL_PATH = PathJoinSubstitution([
+    FindPackageShare("pal_policy_deployer"),
+    "models",
+    "tiagopro",
+    "reaching_tiagopro.onnx",
+])
+
+
+@dataclass(frozen=True)
+class LaunchArguments(LaunchArgumentsBase):
+    use_sim_time: DeclareLaunchArgument = DeclareLaunchArgument(
+        name="use_sim_time",
+        default_value="true",
+        description="Use simulation (Gazebo) clock.",
+    )
+
+    onnx_model_path: DeclareLaunchArgument = DeclareLaunchArgument(
+        name="onnx_model_path",
+        default_value=DEFAULT_MODEL_PATH,
+        description="Absolute path to the ONNX model file.",
+    )
+
+
+def declare_actions(launch_description: LaunchDescription, launch_args: LaunchArguments):
     use_sim_time = LaunchConfiguration("use_sim_time")
     onnx_model_path = LaunchConfiguration("onnx_model_path")
 
-    default_model_path = PathJoinSubstitution([
-        FindPackageShare("pal_policy_deployer"),
-        "models", "tiagopro", "exported", "reaching_tiagopro.onnx"
-    ])
-
-    return LaunchDescription([
-        DeclareLaunchArgument(
-            "use_sim_time",
-            default_value="True",
-            description="Use simulation (Gazebo) clock if true, false for robot."
-        ),
-
-        DeclareLaunchArgument(
-            "onnx_model_path",
-            default_value=default_model_path,
-            description="Absolute path to the ONNX model file."
-        ),
-
+    policy_nodes = GroupAction([
         Node(
             package="pal_policy_preprocessor",
             executable="pal_policy_preprocessor_node",
@@ -59,3 +69,16 @@ def generate_launch_description():
             }],
         ),
     ])
+
+    launch_description.add_action(policy_nodes)
+
+
+def generate_launch_description():
+    ld = LaunchDescription()
+
+    launch_arguments = LaunchArguments()
+    launch_arguments.add_to_launch_description(ld)
+
+    declare_actions(ld, launch_arguments)
+
+    return ld

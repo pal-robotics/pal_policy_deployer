@@ -1,0 +1,27 @@
+tiago_reaching_preprocessor:
+  ros__parameters:
+    excluded_action_joints:
+      - "gripper_right_outer_finger_right_joint"
+      - "gripper_right_outer_finger_left_joint"
+      - "gripper_left_outer_finger_right_joint"
+      - "gripper_left_outer_finger_left_joint"
+
+    initial_pose_left:
+      position: [0.337962, 0.203562, 0.677366]     # [x, y, z]
+      orientation: [0.078844, 0.21089, 0.00096864, 0.97432]  # [w, x, y, z]
+
+    initial_pose_right:
+      position: [0.337751, -0.202208, 0.677405]    # [x, y, z]
+      orientation: [-0.078344, 0.21066, 0.0041078, 0.97441] # [w, x, y, z]
+  # reference_type: "pal_references::${REFERENCE_TYPE}" # TO DO: implement references
+
+pal_policy_postprocessor: 
+    action_scale: 0.5
+    default_joint_position_left: [0.358, -1.827, 0.470, -2.341, 0.0, -1.201, 0.0]
+    default_joint_position_right: [-0.358, -1.827, -0.470, -2.341, 0.0, -1.201, 0.0]
+    minimum_joint_positions: [-4.71239, -2.44346, -2.61799, -2.44346, -1.5708, -1.88496, -2.61799]
+    maximum_joint_positions: [0.523599, 1.13446, 2.61799, 1.13446, 3.66519, 3.00197, 2.61799]
+
+pal_policy_deployer:
+  model_path: "PATH_TO_ONNX_MODEL"  # TO DO: update with actual   
+

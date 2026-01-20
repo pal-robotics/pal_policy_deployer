@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 project(pal_policy_postprocessor)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
@@ -12,4 +8,4 @@ ament_auto_add_executable(${PROJECT_NAME}_node src/postprocessor.cpp
 src/postprocessor_tiago_reaching.cpp
 )
 
-ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR)
+ament_auto_package()
