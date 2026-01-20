@@ -5,35 +5,19 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-set(_Boost_PYTHON310_HEADERS "boost/python.hpp")
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(ament_index_cpp REQUIRED)
-find_package(geometry_msgs REQUIRED)
-
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 include_directories(SYSTEM include 
   /opt/onnxruntime/include
 )
 link_directories(/opt/onnxruntime/lib)
 
-add_executable(${PROJECT_NAME}_node src/onnx.cpp
-  )
-
-ament_target_dependencies(${PROJECT_NAME}_node
-  rclcpp
-  std_msgs
-  ament_index_cpp
-  geometry_msgs      
+ament_auto_add_executable(${PROJECT_NAME}_node src/onnx.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_node
   onnxruntime
 )
 
-install(TARGETS ${PROJECT_NAME}_node
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-ament_package()
+ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR)

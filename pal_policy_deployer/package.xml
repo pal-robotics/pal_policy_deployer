@@ -4,23 +4,17 @@
   <version>0.0.0</version>
   <description>The pal_policy_deployer package</description>
 
-  <maintainer email="louislelay@pal-robotics.com">Louis Le Lay</maintainer>
+  <maintainer email="sofie.blankers@pal-robotics.com">Sofie Blankers</maintainer>
 
   <license>Apache 2.0</license>
 
-  <author email="louislelay@pal-robotics.com">Louis Le Lay</author>
+  <author email="sofie.blankers@pal-robotics.com">Sofie Blankers</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>ament_cmake_auto</build_depend>
 
-  <!-- Message generation -->
-  <build_depend>rosidl_default_generators</build_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
-  <member_of_group>rosidl_interface_packages</member_of_group>
-
   <depend>std_msgs</depend>
 
-  <!-- Aggregate the other packages at runtime -->
   <exec_depend>pal_policy_inferer</exec_depend>
   <exec_depend>pal_policy_preprocessor</exec_depend>
   <exec_depend>pal_policy_postprocessor</exec_depend>

@@ -4,22 +4,17 @@
   <version>0.0.0</version>
   <description>pal_policy_inferer package</description>
 
-  <maintainer email="louislelay@pal-robotics.com">Louis Le Lay</maintainer>
+  <maintainer email="sofie.blankers@pal-robotics.com">Sofie Blankers</maintainer>
 
   <license>Apache 2.0</license>
-
-  <author email="louislelay@pal-robotics.com">Louis Le Lay</author>
+  
   <author email="sofie.blankers@pal-robotics.com">Sofie Blankers</author>
 
-  <!-- Build system -->
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>ament_cmake_auto</build_depend>
 
-  <!-- Dependencies -->
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>ament_index_cpp</depend>
-  <depend>geometry_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

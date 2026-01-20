@@ -5,22 +5,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-set(_Boost_PYTHON310_HEADERS "boost/python.hpp")
 find_package(ament_cmake_auto REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-find_package(std_msgs REQUIRED)
+ament_auto_find_build_dependencies()
 
-include_directories(include SYSTEM) 
-
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/StampedInt8Array.msg"
-  "msg/StampedFloat64Array.msg"
-  DEPENDENCIES std_msgs
-)
-
-ament_export_dependencies(rosidl_default_runtime)
+include_directories(SYSTEM include 
+) 
 
 ament_auto_package(
   INSTALL_TO_SHARE
