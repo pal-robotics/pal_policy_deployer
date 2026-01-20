@@ -40,7 +40,7 @@ OnnxInferer::OnnxInferer()
   }
 
   sub_obs_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-    "/onnx/obs", 1,
+    "/preprocessor/obs", 1,
     std::bind(&OnnxInferer::obsCallback, this, std::placeholders::_1));
 
   pub_output_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(

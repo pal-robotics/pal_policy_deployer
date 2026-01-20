@@ -17,7 +17,7 @@ Preprocessor::Preprocessor(const std::string & node_name, const rclcpp::NodeOpti
   env_(ORT_LOGGING_LEVEL_WARNING, "rl")
 {
   pub_obs_ =
-    this->create_publisher<std_msgs::msg::Float64MultiArray>("preprocessor/obs", 1);
+    this->create_publisher<std_msgs::msg::Float64MultiArray>("/preprocessor/obs", 1);
 
   model_path_ = this->declare_parameter<std::string>("onnx_model_path", "");
   if (model_path_.empty()) {

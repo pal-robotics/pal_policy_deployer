@@ -80,7 +80,26 @@ void TiagoReaching::initBuffersFromConfig()
   buff_joint_pos_ = config_.default_joint_pos;
   buff_joint_vel_.assign(N, 0.0);
   buff_last_action_.assign(static_cast<size_t>(config_.action_dim), 0.0);
-  buff_command_.assign(DIM_CMD, 0.0);
+  // ---- Initial command pose ----
+  buff_command_.resize(DIM_CMD);
+
+  // Left pose (xyz, qw, qx, qy, qz)
+  buff_command_[0] = 0.337962;
+  buff_command_[1] = 0.203562;
+  buff_command_[2] = 0.677366;
+  buff_command_[3] = 0.078844;
+  buff_command_[4] = 0.21089;
+  buff_command_[5] = 0.00096864;
+  buff_command_[6] = 0.97432;
+
+  // Right pose (xyz, qw, qx, qy, qz)
+  buff_command_[7] = 0.337751;
+  buff_command_[8] = -0.202208;
+  buff_command_[9] = 0.677405;
+  buff_command_[10] = -0.078344;
+  buff_command_[11] = 0.21066;
+  buff_command_[12] = 0.0041078;
+  buff_command_[13] = 0.97441;
 }
 
 void TiagoReaching::buildJointIndexMap()
