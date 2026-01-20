@@ -15,7 +15,7 @@
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>onnxruntimes</depend>
+  <depend>onnxruntime</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
