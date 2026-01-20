@@ -8,14 +8,8 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-include_directories(SYSTEM include 
-)
-
 ament_auto_add_executable(${PROJECT_NAME}_node src/postprocessor.cpp
 src/postprocessor_tiago_reaching.cpp
-)
-
-target_link_libraries(${PROJECT_NAME}_node
 )
 
 ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR)

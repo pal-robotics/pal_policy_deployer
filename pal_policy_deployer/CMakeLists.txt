@@ -8,9 +8,6 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-include_directories(SYSTEM include 
-) 
-
 ament_auto_package(
   INSTALL_TO_SHARE
   models
