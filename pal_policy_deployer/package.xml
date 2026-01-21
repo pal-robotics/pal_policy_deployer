@@ -1,41 +1,25 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>pal_policy_deployer</name>
   <version>0.0.0</version>
   <description>The pal_policy_deployer package</description>
 
-  <maintainer email="louislelay@pal-robotics.com">Louis Le Lay</maintainer>
+  <maintainer email="sofie.blankers@pal-robotics.com">Sofie Blankers</maintainer>
 
   <license>Apache 2.0</license>
 
-  <author email="louislelay@pal-robotics.com">Louis Le Lay</author>
+  <author email="sofie.blankers@pal-robotics.com">Sofie Blankers</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>pal_policy_inferer</build_depend>
-  <build_depend>pal_policy_postprocessor</build_depend>
-  <build_depend>pal_policy_preprocessor</build_depend>
-  <build_export_depend>pal_policy_inferer</build_export_depend>
-  <build_export_depend>pal_policy_postprocessor</build_export_depend>
-  <build_export_depend>pal_policy_preprocessor</build_export_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>ament_cmake_auto</build_depend>
+
+  <depend>std_msgs</depend>
+
   <exec_depend>pal_policy_inferer</exec_depend>
-  <exec_depend>pal_policy_postprocessor</exec_depend>
   <exec_depend>pal_policy_preprocessor</exec_depend>
-
-  <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>message_filters</build_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
-  <exec_depend>message_filters</exec_depend>
-  <depend>geometry_msgs</depend>
-  <depend>visualization_msgs</depend>
-  <depend>interactive_markers</depend>
+  <exec_depend>pal_policy_postprocessor</exec_depend>
 
   <export>
-
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

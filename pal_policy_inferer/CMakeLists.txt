@@ -1,55 +1,12 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8)
 project(pal_policy_inferer)
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  roslib
-  std_msgs
-  message_filters
-  visualization_msgs
-  interactive_markers
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
+
+ament_auto_add_executable(${PROJECT_NAME}_node 
+src/inferer.cpp
+src/onnx.cpp
 )
 
-catkin_package(
-  CATKIN_DEPENDS
-    roscpp std_msgs message_filters visualization_msgs interactive_markers
-)
-find_package(Eigen3 REQUIRED NO_MODULE)
-
-########################
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} /opt/onnxruntime/include)
-include_directories(
-  include
-)
-link_directories(/opt/onnxruntime/lib)
-########################
-
-
-
-add_executable(${PROJECT_NAME}_reach_node src/inferer_kang_reach_node.cpp)
-target_link_libraries(${PROJECT_NAME}_reach_node
-  ${catkin_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  onnxruntime
-)
-
-add_executable(${PROJECT_NAME}_balance_node src/inferer_kang_balance_node.cpp)
-target_link_libraries(${PROJECT_NAME}_balance_node
-  ${catkin_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  onnxruntime
-)
-
-add_executable(${PROJECT_NAME}_loco_node src/kang_loco_node.cpp)
-target_link_libraries(${PROJECT_NAME}_loco_node
-  ${catkin_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  onnxruntime
-)
-
-install(TARGETS ${PROJECT_NAME}_reach_node ${PROJECT_NAME}_balance_node ${PROJECT_NAME}_loco_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+ament_auto_package()

@@ -4,30 +4,23 @@
   <version>0.0.0</version>
   <description>The pal_policy_preprocessor package</description>
 
-  <maintainer email="louislelay@pal-robotics.com">Louis Le Lay</maintainer>
+  <maintainer email="sofie.blankers@pal-robotics.com">Sofie Blankers</maintainer>
 
   <license>Apache 2.0</license>
 
-  <author email="louislelay@pal-robotics.com">Louis Le Lay</author>
+  <author email="sofie.blankers@pal-robotics.com">Sofie Blankers</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>message_filters</build_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>message_runtime</exec_depend>
-  <exec_depend>message_filters</exec_depend>
-  <depend>geometry_msgs</depend>
-  <depend>visualization_msgs</depend>
-  <depend>interactive_markers</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>ament_cmake_auto</build_depend>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>eigen</depend>
+  <depend>geometry_msgs</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>onnxruntime</depend>
 
   <export>
-
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
