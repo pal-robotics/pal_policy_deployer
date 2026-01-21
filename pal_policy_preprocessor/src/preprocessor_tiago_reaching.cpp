@@ -54,7 +54,7 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
   run(std::chrono::milliseconds(20));
 }
 
-void TiagoReaching::buildObservationVector(std::vector<double> * obs) const
+void TiagoReaching::buildInputVector(std::vector<double> * obs) const
 {
   auto it = obs->begin();
   it = std::copy(buff_joint_pos_.begin(), buff_joint_pos_.end(), it);

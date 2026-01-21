@@ -20,11 +20,11 @@ public:
 protected:
   void buildMetadataMap(const std::string & onnx_model_path);
   const std::map<std::string, std::string> & metadataMap() const {return metadata_map_;}
-
   void run(std::chrono::milliseconds period = std::chrono::milliseconds(20));
-  virtual void buildObservationVector(std::vector<double> * obs) const = 0;
-  void publishObservation(const std::vector<double> & obs);
+  virtual void buildInputVector(std::vector<double> * obs) const = 0;
 
+
+  // TO DO: move to utils?
   static std::vector<std::string> splitString(const std::string & str, char delimiter);
   static std::vector<double> parseDoubles(const std::string & str);
   static bool isExcludedJoint(
@@ -36,6 +36,7 @@ protected:
   std::vector<double> obs_;
 
 private:
+  void publishInput(const std::vector<double> & obs);
   void onTimer();
 
   std::map<std::string, std::string> metadata_map_;

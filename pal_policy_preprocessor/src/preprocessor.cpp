@@ -67,11 +67,11 @@ void Preprocessor::run(std::chrono::milliseconds const period)
 // HOOK TO CHILD CLASS
 void Preprocessor::onTimer()
 {
-  buildObservationVector(&obs_);
-  publishObservation(obs_);
+  buildInputVector(&obs_);
+  publishInput(obs_);
 }
 
-void Preprocessor::publishObservation(const std::vector<double> & obs)
+void Preprocessor::publishInput(const std::vector<double> & obs)
 {
   std_msgs::msg::Float64MultiArray msg;
   msg.data = obs;
