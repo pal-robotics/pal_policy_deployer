@@ -32,6 +32,8 @@ OnnxInferer::OnnxInferer(const rclcpp::NodeOptions & options)
   }
   in_name_ = sess_->GetInputNameAllocated(0, alloc_).release();
   out_name_ = sess_->GetOutputNameAllocated(0, alloc_).release();
+
+  set_ready(true);
 }
 
 OnnxInferer::~OnnxInferer()

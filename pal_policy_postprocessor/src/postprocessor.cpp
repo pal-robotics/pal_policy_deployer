@@ -16,7 +16,7 @@ Postprocessor::Postprocessor(const std::string & node_name, const rclcpp::NodeOp
 : rclcpp::Node(node_name, options)
 {
   sub_output_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-    "/onnx/output", 1,
+    "/inferer/output", 1,
     std::bind(&Postprocessor::outputCallback, this, std::placeholders::_1));
 }
 
