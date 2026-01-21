@@ -6,6 +6,18 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
   const rclcpp::NodeOptions & options)
 : Postprocessor("tiago_reaching_postprocessor", options)
 {
+  action_scale_ = this->declare_parameter<double>("action_scale", double{0.5});
+
+  left_default_ = this->declare_parameter<std::vector<double>>(
+    "default_joint_position_left", std::vector<double>{});
+  right_default_ = this->declare_parameter<std::vector<double>>(
+    "default_joint_position_right", std::vector<double>{});
+
+  min_val_ = this->declare_parameter<std::vector<double>>(
+    "minimum_joint_positions", std::vector<double>{});
+  max_val_ = this->declare_parameter<std::vector<double>>(
+    "maximum_joint_positions", std::vector<double>{});
+
   pub_q_left_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
     "pal_impedance_control_left/q_desired", 1);
 
@@ -24,31 +36,19 @@ void TiagoReachingPostprocessor::postprocessAndPublish(
   // y[1..7]   left arm
   // y[8..14]  right arm
 
-  constexpr double action_scale = 0.5;
-
-  const std::vector<double> left_default =
-  {0.358, -1.827, 0.470, -2.341, 0.000, -1.201, 0.000};
-  const std::vector<double> right_default =
-  {-0.358, -1.827, -0.470, -2.341, 0.000, -1.201, 0.000};
-
-  const std::vector<double> min_val =
-  {-4.71239, -2.44346, -2.61799, -2.44346, -1.5708, -1.88496, -2.61799};
-  const std::vector<double> max_val =
-  {0.523599, 1.13446, 2.61799, 1.13446, 3.66519, 3.00197, 2.61799};
-
   std::vector<double> left_cmd(7);
   std::vector<double> right_cmd(7);
 
   for (size_t i = 0; i < 7; ++i) {
     left_cmd[i] =
       clamp(
-      left_default[i] + action_scale * y[1 + i],
-      min_val[i], max_val[i]);
+      left_default_[i] + action_scale_ * y[1 + i],
+      min_val_[i], max_val_[i]);
 
     right_cmd[i] =
       clamp(
-      right_default[i] + action_scale * y[8 + i],
-      min_val[i], max_val[i]);
+      right_default_[i] + action_scale_ * y[8 + i],
+      min_val_[i], max_val_[i]);
   }
 
   // publish desired joint positions

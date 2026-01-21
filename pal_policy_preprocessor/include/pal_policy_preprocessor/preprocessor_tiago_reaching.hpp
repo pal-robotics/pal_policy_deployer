@@ -58,6 +58,9 @@ private:
   std::vector<double> buff_last_action_;
   std::vector<double> buff_command_;
 
+  std::vector<std::string> excluded_action_joints_;
+  std::vector<double> left_pos_, left_quat_, right_pos_, right_quat_;
+
   std::unordered_map<std::string, size_t> joint_name_to_index_;
 
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_js_;

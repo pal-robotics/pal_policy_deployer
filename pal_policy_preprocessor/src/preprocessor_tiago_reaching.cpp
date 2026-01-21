@@ -6,16 +6,29 @@ using std::placeholders::_1;
 
 static constexpr int DIM_CMD = 14;
 
-static const std::vector<std::string> excluded_action_joints = {
-  "gripper_right_outer_finger_right_joint",
-  "gripper_right_outer_finger_left_joint",
-  "gripper_left_outer_finger_right_joint",
-  "gripper_left_outer_finger_left_joint",
-};
-
 TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
 : Preprocessor("tiago_reaching_preprocessor", options)
 {
+  excluded_action_joints_ =
+    this->declare_parameter<std::vector<std::string>>(
+    "excluded_action_joints", std::vector<std::string>{});
+
+  left_pos_ =
+    this->declare_parameter<std::vector<double>>(
+    "initial_pose_left.position", std::vector<double>{});
+
+  left_quat_ =
+    this->declare_parameter<std::vector<double>>(
+    "initial_pose_left.orientation", std::vector<double>{});
+
+  right_pos_ =
+    this->declare_parameter<std::vector<double>>(
+    "initial_pose_right.position", std::vector<double>{});
+
+  right_quat_ =
+    this->declare_parameter<std::vector<double>>(
+    "initial_pose_right.orientation", std::vector<double>{});
+
   parseMetadataIntoConfig(metadataMap());
   initBuffersFromConfig();
   buildJointIndexMap();
@@ -59,7 +72,7 @@ void TiagoReaching::parseMetadataIntoConfig(
 
 
   for (const auto & jn : config_.joint_names) {
-    if (!isExcludedJoint(jn, excluded_action_joints)) {
+    if (!isExcludedJoint(jn, excluded_action_joints_)) {
       config_.action_joint_names.push_back(jn);
     }
   }
@@ -82,22 +95,22 @@ void TiagoReaching::initBuffersFromConfig()
   buff_command_.resize(DIM_CMD);
 
   // Left pose (xyz, qw, qx, qy, qz)
-  buff_command_[0] = 0.337962;
-  buff_command_[1] = 0.203562;
-  buff_command_[2] = 0.677366;
-  buff_command_[3] = 0.078844;
-  buff_command_[4] = 0.21089;
-  buff_command_[5] = 0.00096864;
-  buff_command_[6] = 0.97432;
+  buff_command_[0] = left_pos_[0];
+  buff_command_[1] = left_pos_[1];
+  buff_command_[2] = left_pos_[2];
+  buff_command_[3] = left_quat_[0];
+  buff_command_[4] = left_quat_[1];
+  buff_command_[5] = left_quat_[2];
+  buff_command_[6] = left_quat_[3];
 
   // Right pose (xyz, qw, qx, qy, qz)
-  buff_command_[7] = 0.337751;
-  buff_command_[8] = -0.202208;
-  buff_command_[9] = 0.677405;
-  buff_command_[10] = -0.078344;
-  buff_command_[11] = 0.21066;
-  buff_command_[12] = 0.0041078;
-  buff_command_[13] = 0.97441;
+  buff_command_[7] = right_pos_[0];
+  buff_command_[8] = right_pos_[1];
+  buff_command_[9] = right_pos_[2];
+  buff_command_[10] = right_quat_[0];
+  buff_command_[11] = right_quat_[1];
+  buff_command_[12] = right_quat_[2];
+  buff_command_[13] = right_quat_[3];
 }
 
 void TiagoReaching::buildJointIndexMap()

@@ -1,0 +1,7 @@
+pal_policy_postprocessor: 
+  ros__parameters:
+    action_scale: 0.5
+    default_joint_position_left: [0.358, -1.827, 0.470, -2.341, 0.0, -1.201, 0.0]
+    default_joint_position_right: [-0.358, -1.827, -0.470, -2.341, 0.0, -1.201, 0.0]
+    minimum_joint_positions: [-4.71239, -2.44346, -2.61799, -2.44346, -1.5708, -1.88496, -2.61799]
+    maximum_joint_positions: [0.523599, 1.13446, 2.61799, 1.13446, 3.66519, 3.00197, 2.61799]

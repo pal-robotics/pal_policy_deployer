@@ -8,12 +8,26 @@ from launch_ros.substitutions import FindPackageShare
 
 from launch_pal.arg_utils import LaunchArgumentsBase
 
-# TO DO: load model path from config file  
+# TO DO: load model path from config file
 DEFAULT_MODEL_PATH = PathJoinSubstitution([
     FindPackageShare("pal_policy_deployer"),
     "models",
     "tiagopro",
     "reaching_tiagopro.onnx",
+])
+
+PREPROCESSOR_PARAMS = PathJoinSubstitution([
+    FindPackageShare("pal_policy_preprocessor"),
+    "config",
+    "tiago_pro",
+    "params.yaml",
+])
+
+POSTPROCESSOR_PARAMS = PathJoinSubstitution([
+    FindPackageShare("pal_policy_postprocessor"),
+    "config",
+    "tiago_pro",
+    "params.yaml",
 ])
 
 
@@ -42,10 +56,13 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
             executable="pal_policy_preprocessor_node",
             name="pal_policy_preprocessor",
             output="screen",
-            parameters=[{
-                "use_sim_time": use_sim_time,
-                "onnx_model_path": onnx_model_path,
-            }],
+            parameters=[
+                PREPROCESSOR_PARAMS,
+                {
+                    "use_sim_time": use_sim_time,
+                    "onnx_model_path": onnx_model_path,
+                }
+            ],
         ),
 
         Node(
@@ -64,9 +81,12 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
             executable="pal_policy_postprocessor_node",
             name="pal_policy_postprocessor",
             output="screen",
-            parameters=[{
-                "use_sim_time": use_sim_time,
-            }],
+            parameters=[
+                POSTPROCESSOR_PARAMS,
+                {
+                    "use_sim_time": use_sim_time,
+                }
+            ],
         ),
     ])
 

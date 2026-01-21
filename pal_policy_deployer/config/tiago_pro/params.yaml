@@ -1,0 +1,4 @@
+pal_policy_deployer:
+  ros__parameters:
+    model_path: "PATH_TO_ONNX_MODEL"  # TO DO: update with actual   
+
