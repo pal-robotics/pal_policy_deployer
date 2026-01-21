@@ -57,7 +57,7 @@ void Preprocessor::buildMetadataMap(const std::string & onnx_model_path)
 }
 
 // LOOP / RUN FUNCTION
-void Preprocessor::run(std::chrono::milliseconds period)
+void Preprocessor::run(std::chrono::milliseconds const period)
 {
   timer_ = this->create_wall_timer(
     period,
@@ -67,8 +67,8 @@ void Preprocessor::run(std::chrono::milliseconds period)
 // HOOK TO CHILD CLASS
 void Preprocessor::onTimer()
 {
-  std::vector<double> obs = buildObservationVector();
-  publishObservation(obs);
+  buildObservationVector(&obs_);
+  publishObservation(obs_);
 }
 
 void Preprocessor::publishObservation(const std::vector<double> & obs)

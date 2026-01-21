@@ -36,20 +36,18 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
   sub_last_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "/reaching_tiago/last_action", 1, std::bind(&TiagoReaching::lastCB, this, _1));
 
+
+  obs_.assign(static_cast<size_t>(config_.obs_dim), 0.0);
   run(std::chrono::milliseconds(20));
 }
 
-std::vector<double> TiagoReaching::buildObservationVector() const
+void TiagoReaching::buildObservationVector(std::vector<double> * obs) const
 {
-  std::vector<double> obs;
-  obs.reserve(static_cast<size_t>(config_.obs_dim));
-
-  obs.insert(obs.end(), buff_joint_pos_.begin(), buff_joint_pos_.end());
-  obs.insert(obs.end(), buff_joint_vel_.begin(), buff_joint_vel_.end());
-  obs.insert(obs.end(), buff_last_action_.begin(), buff_last_action_.end());
-  obs.insert(obs.end(), buff_command_.begin(), buff_command_.end());
-
-  return obs;
+  auto it = obs->begin();
+  it = std::copy(buff_joint_pos_.begin(), buff_joint_pos_.end(), it);
+  it = std::copy(buff_joint_vel_.begin(), buff_joint_vel_.end(), it);
+  it = std::copy(buff_last_action_.begin(), buff_last_action_.end(), it);
+  it = std::copy(buff_command_.begin(), buff_command_.end(), it);
 }
 
 void TiagoReaching::parseMetadataIntoConfig(

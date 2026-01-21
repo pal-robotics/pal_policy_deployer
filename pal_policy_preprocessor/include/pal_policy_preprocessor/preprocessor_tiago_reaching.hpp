@@ -35,7 +35,7 @@ public:
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 protected:
-  std::vector<double> buildObservationVector() const override;
+  void buildObservationVector(std::vector<double> * obs) const override;
 
 private:
   void parseMetadataIntoConfig(const std::map<std::string, std::string> & mm);

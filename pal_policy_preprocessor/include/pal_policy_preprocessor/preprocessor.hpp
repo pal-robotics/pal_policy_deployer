@@ -22,7 +22,7 @@ protected:
   const std::map<std::string, std::string> & metadataMap() const {return metadata_map_;}
 
   void run(std::chrono::milliseconds period = std::chrono::milliseconds(20));
-  virtual std::vector<double> buildObservationVector() const = 0;
+  virtual void buildObservationVector(std::vector<double> * obs) const = 0;
   void publishObservation(const std::vector<double> & obs);
 
   static std::vector<std::string> splitString(const std::string & str, char delimiter);
@@ -32,6 +32,8 @@ protected:
     const std::vector<std::string> & excluded);
 
   Ort::Env env_;
+
+  std::vector<double> obs_;
 
 private:
   void onTimer();
