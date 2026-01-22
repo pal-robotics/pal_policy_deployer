@@ -13,22 +13,19 @@ OnnxInferer::OnnxInferer(const rclcpp::NodeOptions & options)
     throw std::runtime_error("onnx_model_path param not set");
   }
 
+  this->declare_parameter<int64_t>("input_dimension", 0);
+  this->declare_parameter<int64_t>("output_dimension", 0);
+
+  input_dim = this->get_parameter("input_dimension").as_int();
+  output_dim = this->get_parameter("output_dimension").as_int();
+
   // create session
   Ort::SessionOptions so;
   sess_.reset(new Ort::Session(env_, model_path_.c_str(), so));
 
-  Ort::TypeInfo input_info = sess_->GetInputTypeInfo(0);
-  auto tensor_info = input_info.GetTensorTypeAndShapeInfo();
-  std::vector<int64_t> dims = tensor_info.GetShape();
-
-  if (dims.size() < 2 || dims[1] <= 0) {
-    throw std::runtime_error("ONNX obs dim is dynamic/invalid (expected fixed [1, N])");
-  }
-  obs_dim_ = static_cast<size_t>(dims[1]);
-
   {
     std::lock_guard<std::mutex> lk(observation_mutex_);
-    observation_.assign(obs_dim_, 0.0);
+    observation_.assign(input_dim, 0.0);
   }
   in_name_ = sess_->GetInputNameAllocated(0, alloc_).release();
   out_name_ = sess_->GetOutputNameAllocated(0, alloc_).release();
@@ -73,10 +70,8 @@ std::vector<double> OnnxInferer::InferOutput(const std::vector<double> & obs)
     1);
 
   const float * y_f = outputs.front().GetTensorData<float>();
-  const size_t n = outputs.front().GetTensorTypeAndShapeInfo().GetElementCount();
-
-  std::vector<double> y(n);
-  for (size_t i = 0; i < n; ++i) {
+  std::vector<double> y(output_dim);
+  for (size_t i = 0; i < output_dim; ++i) {
     y[i] = static_cast<double>(y_f[i]);
   }
   return y;

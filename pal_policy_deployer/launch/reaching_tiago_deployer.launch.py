@@ -26,13 +26,10 @@ def _build_metadata_map(context, *args, **kwargs) -> list[SetLaunchConfiguration
     input_shape = input_shape[-1]
     output_shape = output_shape[-1]
 
-    metadata_map = {
-        prop.key: prop.value
-        for prop in model.metadata_props
-    }
     metadata_params = []
-    for key, value in metadata_map.items():
-        metadata_params.append(SetLaunchConfiguration(name = key, value = value))
+    for prop in model.metadata_props:
+        metadata_params.append(SetLaunchConfiguration(name = prop.key, value = prop.value))
+
     metadata_params.append(SetLaunchConfiguration(name = "input_dimension", value = str(input_shape)))
     metadata_params.append(SetLaunchConfiguration(name = "output_dimension", value = str(output_shape)))
     return metadata_params 
@@ -125,6 +122,8 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
                     "use_sim_time": use_sim_time,
                     "input_dimension": ParameterValue(LaunchConfiguration("input_dimension"), value_type=int),
                     "output_dimension": ParameterValue(LaunchConfiguration("output_dimension"), value_type=int),
+                    "action_scale": LaunchConfiguration("action_scale"),
+                    "default_joint_pos": LaunchConfiguration("default_joint_pos"),
                 }
             ],
         ),
