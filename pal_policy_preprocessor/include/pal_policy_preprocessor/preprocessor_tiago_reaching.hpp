@@ -13,8 +13,6 @@
 
 struct PolicyConfig
 {
-  std::string run_path;
-
   std::vector<std::string> joint_names;
   std::vector<double> default_joint_pos;
 
@@ -32,7 +30,6 @@ protected:
   void buildInputVector(std::vector<double> * obs) const override;
 
 private:
-  void parseMetadataIntoConfig(const std::map<std::string, std::string> & mm);
   void initBuffersFromConfig();
   void buildJointIndexMap();
 
@@ -44,7 +41,6 @@ private:
   void rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg);
   void lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
 
-private:
   PolicyConfig config_;
 
   std::vector<double> buff_joint_pos_;

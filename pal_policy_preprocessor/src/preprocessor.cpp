@@ -12,15 +12,9 @@ namespace fs = std::filesystem;
 // BASE CLASS IMPLEMENTATION
 Preprocessor::Preprocessor(const std::string & node_name, const rclcpp::NodeOptions & options)
 : rclcpp::Node(node_name, options),
-  env_(ORT_LOGGING_LEVEL_WARNING, "rl")
 {
   pub_obs_ =
     this->create_publisher<std_msgs::msg::Float64MultiArray>("/preprocessor/obs", 1);
-
-  model_path_ = this->declare_parameter<std::string>("onnx_model_path", "");
-  if (model_path_.empty()) {
-    throw std::runtime_error("onnx_model_path param not set");
-  }
 
 }
 
@@ -75,11 +69,4 @@ Preprocessor::parseDoubles(const std::string & str)
     }
   }
   return values;
-}
-
-bool Preprocessor::isExcludedJoint(
-  const std::string & joint_name,
-  const std::vector<std::string> & excluded)
-{
-  return std::find(excluded.begin(), excluded.end(), joint_name) != excluded.end();
 }

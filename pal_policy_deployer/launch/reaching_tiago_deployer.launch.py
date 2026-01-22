@@ -63,7 +63,7 @@ class LaunchArguments(LaunchArgumentsBase):
     use_sim_time: DeclareLaunchArgument = DeclareLaunchArgument(
         name="use_sim_time",
         default_value="true",
-        description="Use simulation (Gazebo) clock.",
+        description="Use simulation clock.",
     )
 
     onnx_model_path: DeclareLaunchArgument = DeclareLaunchArgument(
@@ -89,7 +89,6 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
                 PREPROCESSOR_PARAMS,
                 {
                     "use_sim_time": use_sim_time,
-                    "onnx_model_path": onnx_model_path,
                     "input_dimension": ParameterValue(LaunchConfiguration("input_dimension"), value_type=int),
                     "output_dimension": ParameterValue(LaunchConfiguration("output_dimension"), value_type=int),
                     "joint_names": LaunchConfiguration("joint_names"),

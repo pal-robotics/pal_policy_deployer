@@ -16,6 +16,7 @@ public:
 
 protected:
   virtual void postprocessAndPublish(const std::vector<double> & y) = 0;
+  static std::vector<double> parseDoubles(const std::string & str);
 
 private:
   void outputCallback(

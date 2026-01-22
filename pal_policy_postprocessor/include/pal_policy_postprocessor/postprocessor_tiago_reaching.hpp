@@ -27,6 +27,6 @@ private:
   std::vector<double> left_cmd_;
   std::vector<double> right_cmd_;
 
-  std::vector<double> left_default_, right_default_, min_val_, max_val_;
+  std::vector<double> left_default_, right_default_, default_joint_pos_, min_val_, max_val_;
   double action_scale_;
 };

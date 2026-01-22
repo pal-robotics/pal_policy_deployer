@@ -25,3 +25,19 @@ void Postprocessor::outputCallback(
 {
   postprocessAndPublish(msg->data); // hook to child class
 }
+
+// -------------------- UTILITIES --------------------
+std::vector<double>
+Postprocessor::parseDoubles(const std::string & str)
+{
+  std::vector<double> values;
+  std::stringstream ss(str);
+  std::string token;
+
+  while (std::getline(ss, token, ',')) {
+    if (!token.empty()) {
+      values.push_back(std::stod(token));
+    }
+  }
+  return values;
+}
