@@ -29,4 +29,7 @@ private:
 
   char * in_name_{nullptr};
   char * out_name_{nullptr};
+
+  int input_dim{0};
+  int output_dim{0};
 };

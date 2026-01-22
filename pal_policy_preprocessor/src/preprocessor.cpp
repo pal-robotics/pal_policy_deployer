@@ -22,38 +22,6 @@ Preprocessor::Preprocessor(const std::string & node_name, const rclcpp::NodeOpti
     throw std::runtime_error("onnx_model_path param not set");
   }
 
-  buildMetadataMap(model_path_);
-
-}
-
-// BUILD METADATA MAP
-void Preprocessor::buildMetadataMap(const std::string & onnx_model_path)
-{
-  if (onnx_model_path.empty()) {
-    throw std::runtime_error("buildMetadataMap(): onnx_model_path is empty");
-  }
-
-  Ort::SessionOptions session_options;
-  Ort::Session session(env_, onnx_model_path.c_str(), session_options);
-
-  Ort::ModelMetadata metadata = session.GetModelMetadata();
-  Ort::AllocatorWithDefaultOptions allocator;
-
-  std::vector<Ort::AllocatedStringPtr> keys =
-    metadata.GetCustomMetadataMapKeysAllocated(allocator);
-
-  metadata_map_.clear();
-
-  for (auto & key_ptr : keys) {
-    const std::string key = key_ptr.get();
-
-    Ort::AllocatedStringPtr value_ptr =
-      metadata.LookupCustomMetadataMapAllocated(key.c_str(), allocator);
-
-    if (value_ptr) {
-      metadata_map_[key] = value_ptr.get();
-    }
-  }
 }
 
 // LOOP / RUN FUNCTION

@@ -18,14 +18,8 @@ struct PolicyConfig
   std::vector<std::string> joint_names;
   std::vector<double> default_joint_pos;
 
-  std::vector<double> action_scale;
-  std::vector<double> joint_stiffness;
-  std::vector<double> joint_damping;
-
-  std::vector<std::string> action_joint_names;
-
-  int obs_dim{0};
-  int action_dim{0};
+  int input_dim{0};
+  int output_dim{0};
 };
 
 class TiagoReaching : public Preprocessor
@@ -58,7 +52,6 @@ private:
   std::vector<double> buff_last_action_;
   std::vector<double> buff_command_;
 
-  std::vector<std::string> excluded_action_joints_;
   std::vector<double> left_pos_, left_quat_, right_pos_, right_quat_;
 
   std::unordered_map<std::string, size_t> joint_name_to_index_;

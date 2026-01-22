@@ -9,9 +9,29 @@ static constexpr int DIM_CMD = 14;
 TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
 : Preprocessor("tiago_reaching_preprocessor", options)
 {
-  excluded_action_joints_ =
-    this->declare_parameter<std::vector<std::string>>(
-    "excluded_action_joints", std::vector<std::string>{});
+  this->declare_parameter<std::string>("joint_names", "");
+  this->declare_parameter<std::string>("default_joint_pos", "");
+
+  this->declare_parameter<int64_t>("input_dimension", 0);
+  this->declare_parameter<int64_t>("output_dimension", 0);
+
+  const std::string joint_names_str =
+    this->get_parameter("joint_names").as_string();
+
+  const std::string default_joint_pos_str =
+    this->get_parameter("default_joint_pos").as_string();
+
+  const int64_t input_dim =
+    this->get_parameter("input_dimension").as_int();
+
+  const int64_t output_dim =
+    this->get_parameter("output_dimension").as_int();
+
+  config_.joint_names = splitString(joint_names_str, ',');
+  config_.default_joint_pos = parseDoubles(default_joint_pos_str);
+
+  config_.input_dim = static_cast<size_t>(input_dim);
+  config_.output_dim = static_cast<size_t>(output_dim);
 
   left_pos_ =
     this->declare_parameter<std::vector<double>>(
@@ -29,7 +49,7 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
     this->declare_parameter<std::vector<double>>(
     "initial_pose_right.orientation", std::vector<double>{});
 
-  parseMetadataIntoConfig(metadataMap());
+
   initBuffersFromConfig();
   buildJointIndexMap();
 
@@ -50,7 +70,7 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
     "/reaching_tiago/last_action", 1, std::bind(&TiagoReaching::lastCB, this, _1));
 
 
-  obs_.assign(static_cast<size_t>(config_.obs_dim), 0.0);
+  obs_.assign(static_cast<size_t>(config_.input_dim), 0.0);
   run(std::chrono::milliseconds(20));
 }
 
@@ -63,34 +83,12 @@ void TiagoReaching::buildInputVector(std::vector<double> * obs) const
   it = std::copy(buff_command_.begin(), buff_command_.end(), it);
 }
 
-void TiagoReaching::parseMetadataIntoConfig(
-  const std::map<std::string, std::string> & mm)
-{
-  config_.joint_names = splitString(mm.at("joint_names"), ',');
-  config_.default_joint_pos = parseDoubles(mm.at("default_joint_pos"));
-  config_.action_scale = parseDoubles(mm.at("action_scale"));
-
-
-  for (const auto & jn : config_.joint_names) {
-    if (!isExcludedJoint(jn, excluded_action_joints_)) {
-      config_.action_joint_names.push_back(jn);
-    }
-  }
-
-  const int N = static_cast<int>(config_.joint_names.size());
-  const int M = static_cast<int>(config_.action_joint_names.size());
-
-  config_.action_dim = M;
-  config_.obs_dim = (2 * N) + M + DIM_CMD; // TO DO >> can we infer this from ONNX model?
-}
-
 void TiagoReaching::initBuffersFromConfig()
 {
   const size_t N = config_.joint_names.size();
-
   buff_joint_pos_ = config_.default_joint_pos;
   buff_joint_vel_.assign(N, 0.0);
-  buff_last_action_.assign(static_cast<size_t>(config_.action_dim), 0.0);
+  buff_last_action_.assign(static_cast<size_t>(config_.output_dim), 0.0);
   // ---- Initial command pose ----
   buff_command_.resize(DIM_CMD);
 
