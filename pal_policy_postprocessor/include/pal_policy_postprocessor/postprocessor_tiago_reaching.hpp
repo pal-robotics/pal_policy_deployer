@@ -24,8 +24,9 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_q_right_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_last_;
 
-  std::vector<double> left_cmd_;
-  std::vector<double> right_cmd_;
+  std_msgs::msg::Float64MultiArray msg_left_;
+  std_msgs::msg::Float64MultiArray msg_right_;
+  std_msgs::msg::Float64MultiArray last_;
 
   std::vector<double> left_default_, right_default_, default_joint_pos_, min_val_, max_val_;
   double action_scale_;

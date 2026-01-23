@@ -11,6 +11,7 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
   const std::string default_joint_pos_str =
     this->get_parameter("default_joint_pos").as_string();
   default_joint_pos_ = parseDoubles(default_joint_pos_str);
+
   left_default_ = std::vector<double>(
     default_joint_pos_.begin() + 1,
     default_joint_pos_.begin() + 1 + 7
@@ -21,13 +22,14 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
     default_joint_pos_.begin() + 10 + 7
   );
 
+  msg_left_.data.resize(7);
+  msg_right_.data.resize(7);
+  last_.data.resize(15);
+
   min_val_ = this->declare_parameter<std::vector<double>>(
     "minimum_joint_positions", std::vector<double>{});
   max_val_ = this->declare_parameter<std::vector<double>>(
     "maximum_joint_positions", std::vector<double>{});
-
-  left_cmd_.resize(7);
-  right_cmd_.resize(7);
 
   pub_q_left_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
     "pal_impedance_control_left/q_desired", 1);
@@ -48,30 +50,24 @@ void TiagoReachingPostprocessor::postprocessAndPublish(
   // y[8..14]  right arm
 
   for (size_t i = 0; i < 7; ++i) {
-    left_cmd_[i] =
+    msg_left_.data[i] =
       clamp(
       left_default_[i] + action_scale_ * y[1 + i],
       min_val_[i], max_val_[i]);
 
-    right_cmd_[i] =
+    msg_right_.data[i] =
       clamp(
       right_default_[i] + action_scale_ * y[8 + i],
       min_val_[i], max_val_[i]);
   }
 
   // publish desired joint positions
-  std_msgs::msg::Float64MultiArray msg_left;
-  msg_left.data = left_cmd_;
-  pub_q_left_->publish(msg_left);
 
-  std_msgs::msg::Float64MultiArray msg_right;
-  msg_right.data = right_cmd_;
-  pub_q_right_->publish(msg_right);
-
+  pub_q_left_->publish(msg_left_);
+  pub_q_right_->publish(msg_right_);
   // publish last action (raw network output)
-  std_msgs::msg::Float64MultiArray last;
-  last.data.assign(y.begin(), y.begin() + 15);
-  pub_last_->publish(last);
+  last_.data.assign(y.begin(), y.begin() + 15);
+  pub_last_->publish(last_);
 }
 
 int main(int argc, char ** argv)
