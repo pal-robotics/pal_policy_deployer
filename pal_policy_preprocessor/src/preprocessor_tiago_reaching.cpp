@@ -9,23 +9,12 @@ static constexpr int DIM_CMD = 14;
 TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
 : Preprocessor("tiago_reaching_preprocessor", options)
 {
-  this->declare_parameter<std::string>("joint_names", "");
-  this->declare_parameter<std::string>("default_joint_pos", "");
+  const std::string joint_names_str = this->declare_parameter<std::string>("joint_names", "");
+  const std::string default_joint_pos_str = this->declare_parameter<std::string>(
+    "default_joint_pos", "");
 
-  this->declare_parameter<int64_t>("input_dimension", 0);
-  this->declare_parameter<int64_t>("output_dimension", 0);
-
-  const std::string joint_names_str =
-    this->get_parameter("joint_names").as_string();
-
-  const std::string default_joint_pos_str =
-    this->get_parameter("default_joint_pos").as_string();
-
-  const int64_t input_dim =
-    this->get_parameter("input_dimension").as_int();
-
-  const int64_t output_dim =
-    this->get_parameter("output_dimension").as_int();
+  const int64_t input_dim = this->declare_parameter<int64_t>("input_dimension", 0);
+  const int64_t output_dim = this->declare_parameter<int64_t>("output_dimension", 0);
 
   config_.joint_names = splitString(joint_names_str, ',');
   config_.default_joint_pos = parseDoubles(default_joint_pos_str);

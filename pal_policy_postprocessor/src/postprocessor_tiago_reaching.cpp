@@ -7,9 +7,9 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
 : Postprocessor("tiago_reaching_postprocessor", options)
 {
   action_scale_ = this->declare_parameter<double>("action_scale", double{0.5});
-  this->declare_parameter<std::string>("default_joint_pos", "");
-  const std::string default_joint_pos_str =
-    this->get_parameter("default_joint_pos").as_string();
+
+  const std::string default_joint_pos_str = this->declare_parameter<std::string>(
+    "default_joint_pos", "");
   default_joint_pos_ = parseDoubles(default_joint_pos_str);
 
   left_default_ = std::vector<double>(
@@ -22,8 +22,8 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
     default_joint_pos_.begin() + 10 + 7
   );
 
-  msg_left_.data.resize(7);
-  msg_right_.data.resize(7);
+  msg_left_.data.resize(left_default_.size());
+  msg_right_.data.resize(right_default_.size());
   last_.data.resize(15);
 
   min_val_ = this->declare_parameter<std::vector<double>>(
