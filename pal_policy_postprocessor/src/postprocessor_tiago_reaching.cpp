@@ -7,24 +7,19 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
 : Postprocessor("tiago_reaching_postprocessor", options)
 {
   action_scale_ = this->declare_parameter<double>("action_scale", double{0.5});
-  // this->declare_parameter<std::string>("default_joint_pos", "");
-  // const std::string default_joint_pos_str =
-  //   this->get_parameter("default_joint_pos").as_string();
-  // default_joint_pos_ = parseDoubles(default_joint_pos_str);
-  // left_default_ = std::vector<double>(
-  //   default_joint_pos_.begin() + 1,
-  //   default_joint_pos_.begin() + 1 + 7
-  // );
+  this->declare_parameter<std::string>("default_joint_pos", "");
+  const std::string default_joint_pos_str =
+    this->get_parameter("default_joint_pos").as_string();
+  default_joint_pos_ = parseDoubles(default_joint_pos_str);
+  left_default_ = std::vector<double>(
+    default_joint_pos_.begin() + 1,
+    default_joint_pos_.begin() + 1 + 7
+  );
 
-  // right_default_ = std::vector<double>(
-  //   default_joint_pos_.begin() + 8,
-  //   default_joint_pos_.begin() + 8 + 7
-  // );
-
-  left_default_ = this->declare_parameter<std::vector<double>>(
-    "default_joint_position_left", std::vector<double>{});
-  right_default_ = this->declare_parameter<std::vector<double>>(
-    "default_joint_position_right", std::vector<double>{});
+  right_default_ = std::vector<double>(
+    default_joint_pos_.begin() + 10,
+    default_joint_pos_.begin() + 10 + 7
+  );
 
   min_val_ = this->declare_parameter<std::vector<double>>(
     "minimum_joint_positions", std::vector<double>{});
