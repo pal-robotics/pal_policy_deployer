@@ -19,6 +19,9 @@ OnnxInferer::OnnxInferer(const rclcpp::NodeOptions & options)
   input_dim = this->get_parameter("input_dimension").as_int();
   output_dim = this->get_parameter("output_dimension").as_int();
 
+  input_f_.resize(static_cast<size_t>(input_dim));
+  input_shape_ = {{1, input_dim}};
+
   // create session
   Ort::SessionOptions so;
   sess_.reset(new Ort::Session(env_, model_path_.c_str(), so));
@@ -29,6 +32,9 @@ OnnxInferer::OnnxInferer(const rclcpp::NodeOptions & options)
   }
   in_name_ = sess_->GetInputNameAllocated(0, alloc_).release();
   out_name_ = sess_->GetOutputNameAllocated(0, alloc_).release();
+
+  input_names_[0] = in_name_;
+  output_names_[0] = out_name_;
 
   set_ready(true);
 }
@@ -45,37 +51,35 @@ OnnxInferer::~OnnxInferer()
   }
 }
 
-std::vector<double> OnnxInferer::InferOutput(const std::vector<double> & obs)
+void OnnxInferer::InferOutput(const std::vector<double> & obs, std::vector<double> & y_out)
 {
-  std::vector<float> obs_f(obs.begin(), obs.end());
+  y_out.assign(static_cast<size_t>(output_dim), 0.0);
 
-  std::array<int64_t, 2> input_shape{{1, static_cast<int64_t>(obs_f.size())}};
+  for (int64_t i = 0; i < input_dim; ++i) {
+    input_f_[static_cast<size_t>(i)] = static_cast<float>(obs[static_cast<size_t>(i)]);
+  }
 
   Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
     mem_,
-    obs_f.data(),
-    obs_f.size(),
-    input_shape.data(),
-    input_shape.size());
-
-  const char * input_names[] = {in_name_};
-  const char * output_names[] = {out_name_};
+    input_f_.data(),
+    input_f_.size(),
+    input_shape_.data(),
+    input_shape_.size());
 
   auto outputs = sess_->Run(
     Ort::RunOptions{nullptr},
-    input_names,
+    input_names_,
     &input_tensor,
     1,
-    output_names,
+    output_names_,
     1);
 
   const float * y_f = outputs.front().GetTensorData<float>();
-  std::vector<double> y(output_dim);
-  for (size_t i = 0; i < output_dim; ++i) {
-    y[i] = static_cast<double>(y_f[i]);
+  for (int64_t i = 0; i < output_dim; ++i) {
+    y_out[static_cast<size_t>(i)] = static_cast<double>(y_f[static_cast<size_t>(i)]);
   }
-  return y;
 }
+
 
 int main(int argc, char ** argv)
 {

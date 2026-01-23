@@ -49,7 +49,6 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
     this->declare_parameter<std::vector<double>>(
     "initial_pose_right.orientation", std::vector<double>{});
 
-
   initBuffersFromConfig();
   buildJointIndexMap();
 
