@@ -42,21 +42,6 @@ DEFAULT_MODEL_PATH = PathJoinSubstitution([
     "reaching_tiagopro.onnx",
 ])
 
-PREPROCESSOR_PARAMS = PathJoinSubstitution([
-    FindPackageShare("pal_policy_preprocessor"),
-    "config",
-    "tiago_pro",
-    "params.yaml",
-])
-
-POSTPROCESSOR_PARAMS = PathJoinSubstitution([
-    FindPackageShare("pal_policy_postprocessor"),
-    "config",
-    "tiago_pro",
-    "params.yaml",
-])
-
-
 # Launch file 
 @dataclass(frozen=True)
 class LaunchArguments(LaunchArgumentsBase):
@@ -72,11 +57,33 @@ class LaunchArguments(LaunchArgumentsBase):
         description="Absolute path to the ONNX model file.",
     )
 
+    preprocessor_params: DeclareLaunchArgument = DeclareLaunchArgument(
+        name="preprocessor_params",
+        default_value="",
+        description="Path to the preprocessor parameters file.",
+    )
+
+    postprocessor_params: DeclareLaunchArgument = DeclareLaunchArgument(
+        name="postprocessor_params",
+        default_value="",
+        description="Path to the postprocessor parameters file.",
+    )
 
 def declare_actions(launch_description: LaunchDescription, launch_args: LaunchArguments):
-    use_sim_time = LaunchConfiguration("use_sim_time")
-    onnx_model_path = LaunchConfiguration("onnx_model_path")
+    PREPROCESSOR_PARAMS = PathJoinSubstitution([
+        FindPackageShare("pal_policy_preprocessor"),
+        "config",
+        "tiago_pro",
+        "params.yaml",
+    ])
 
+    POSTPROCESSOR_PARAMS = PathJoinSubstitution([
+    FindPackageShare("pal_policy_postprocessor"),
+        "config",
+        "tiago_pro",
+        "params.yaml",
+    ])
+    
     launch_description.add_action(OpaqueFunction(function=_build_metadata_map))
 
     policy_nodes = GroupAction([
@@ -88,7 +95,7 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
             parameters=[
                 PREPROCESSOR_PARAMS,
                 {
-                    "use_sim_time": use_sim_time,
+                    "use_sim_time": LaunchConfiguration("use_sim_time"),
                     "input_dimension": ParameterValue(LaunchConfiguration("input_dimension"), value_type=int),
                     "output_dimension": ParameterValue(LaunchConfiguration("output_dimension"), value_type=int),
                     "joint_names": LaunchConfiguration("joint_names"),
@@ -103,8 +110,8 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
             name="pal_policy_inferer",
             output="screen",
             parameters=[{
-                "use_sim_time": use_sim_time,
-                "onnx_model_path": onnx_model_path,
+                "use_sim_time": LaunchConfiguration("use_sim_time"),
+                "onnx_model_path": LaunchConfiguration("onnx_model_path"),
                 "input_dimension": ParameterValue(LaunchConfiguration("input_dimension"), value_type=int),
                 "output_dimension": ParameterValue(LaunchConfiguration("output_dimension"), value_type=int),
             }],
@@ -118,7 +125,7 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
             parameters=[
                 POSTPROCESSOR_PARAMS,
                 {
-                    "use_sim_time": use_sim_time,
+                    "use_sim_time": LaunchConfiguration("use_sim_time"),
                     "input_dimension": ParameterValue(LaunchConfiguration("input_dimension"), value_type=int),
                     "output_dimension": ParameterValue(LaunchConfiguration("output_dimension"), value_type=int),
                     "action_scale": LaunchConfiguration("action_scale"),
