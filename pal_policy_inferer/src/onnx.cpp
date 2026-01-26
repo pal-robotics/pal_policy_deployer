@@ -13,28 +13,25 @@ OnnxInferer::OnnxInferer(const rclcpp::NodeOptions & options)
     throw std::runtime_error("onnx_model_path param not set");
   }
 
-  this->declare_parameter<int64_t>("input_dimension", 0);
-  this->declare_parameter<int64_t>("output_dimension", 0);
-
-  input_dim = this->get_parameter("input_dimension").as_int();
-  output_dim = this->get_parameter("output_dimension").as_int();
-
-  input_f_.resize(static_cast<size_t>(input_dim));
-  input_shape_ = {{1, input_dim}};
-
   // create session
   Ort::SessionOptions so;
   sess_.reset(new Ort::Session(env_, model_path_.c_str(), so));
 
+  Ort::TypeInfo input_info = sess_->GetInputTypeInfo(0);
+  auto tensor_info = input_info.GetTensorTypeAndShapeInfo();
+  std::vector<int64_t> dims = tensor_info.GetShape();
+
+  if (dims.size() < 2 || dims[1] <= 0) {
+    throw std::runtime_error("ONNX obs dim is dynamic/invalid (expected fixed [1, N])");
+  }
+  obs_dim_ = static_cast<size_t>(dims[1]);
+
   {
     std::lock_guard<std::mutex> lk(observation_mutex_);
-    observation_.assign(input_dim, 0.0);
+    observation_.assign(obs_dim_, 0.0);
   }
   in_name_ = sess_->GetInputNameAllocated(0, alloc_).release();
   out_name_ = sess_->GetOutputNameAllocated(0, alloc_).release();
-
-  input_names_[0] = in_name_;
-  output_names_[0] = out_name_;
 
   set_ready(true);
 }
@@ -51,35 +48,39 @@ OnnxInferer::~OnnxInferer()
   }
 }
 
-void OnnxInferer::InferOutput(const std::vector<double> & obs, std::vector<double> & y_out)
+std::vector<double> OnnxInferer::InferOutput(const std::vector<double> & obs)
 {
-  y_out.assign(static_cast<size_t>(output_dim), 0.0);
+  std::vector<float> obs_f(obs.begin(), obs.end());
 
-  for (int64_t i = 0; i < input_dim; ++i) {
-    input_f_[static_cast<size_t>(i)] = static_cast<float>(obs[static_cast<size_t>(i)]);
-  }
+  std::array<int64_t, 2> input_shape{{1, static_cast<int64_t>(obs_f.size())}};
 
   Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
     mem_,
-    input_f_.data(),
-    input_f_.size(),
-    input_shape_.data(),
-    input_shape_.size());
+    obs_f.data(),
+    obs_f.size(),
+    input_shape.data(),
+    input_shape.size());
+
+  const char * input_names[] = {in_name_};
+  const char * output_names[] = {out_name_};
 
   auto outputs = sess_->Run(
     Ort::RunOptions{nullptr},
-    input_names_,
+    input_names,
     &input_tensor,
     1,
-    output_names_,
+    output_names,
     1);
 
   const float * y_f = outputs.front().GetTensorData<float>();
-  for (int64_t i = 0; i < output_dim; ++i) {
-    y_out[static_cast<size_t>(i)] = static_cast<double>(y_f[static_cast<size_t>(i)]);
-  }
-}
+  const size_t n = outputs.front().GetTensorTypeAndShapeInfo().GetElementCount();
 
+  std::vector<double> y(n);
+  for (size_t i = 0; i < n; ++i) {
+    y[i] = static_cast<double>(y_f[i]);
+  }
+  return y;
+}
 
 int main(int argc, char ** argv)
 {

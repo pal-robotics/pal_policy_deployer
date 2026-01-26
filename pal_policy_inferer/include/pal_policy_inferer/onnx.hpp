@@ -1,4 +1,4 @@
-#pragma once
+// #pragma once
 
 #include "pal_policy_inferer/inferer.hpp"
 
@@ -16,7 +16,7 @@ public:
   ~OnnxInferer() override;
 
 protected:
-  void InferOutput(const std::vector<double> & obs, std::vector<double> & y_out) override;
+  std::vector<double> InferOutput(const std::vector<double> & obs) override;
 
 private:
   std::string model_path_;
@@ -29,14 +29,4 @@ private:
 
   char * in_name_{nullptr};
   char * out_name_{nullptr};
-
-  const char * input_names_[1]{nullptr};
-  const char * output_names_[1]{nullptr};
-
-  int64_t input_dim{0};
-  int64_t output_dim{0};
-
-  std::vector<float> input_f_;
-  std::array<int64_t, 2> input_shape_{{1, 0}};
-
 };

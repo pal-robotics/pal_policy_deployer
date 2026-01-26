@@ -123,12 +123,15 @@ void TiagoReaching::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
   }
 }
 
-void TiagoReaching::leftPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
+void TiagoReaching::leftPosCB(
+  const geometry_msgs::msg::Point::SharedPtr msg)
 {
   buff_command_[0] = msg->x;
   buff_command_[1] = msg->y;
   buff_command_[2] = msg->z;
+
 }
+
 
 void TiagoReaching::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {

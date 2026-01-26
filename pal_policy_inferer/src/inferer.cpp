@@ -31,14 +31,16 @@ void Inferer::timerCallback()
     return;
   }
 
+  std::vector<double> obs;
   {
     std::lock_guard<std::mutex> lk(observation_mutex_);
-    InferOutput(observation_, y_out_);
+    obs = observation_;
   }
 
+  std::vector<double> y = InferOutput(obs);
 
   std_msgs::msg::Float64MultiArray outputs_msg;
-  outputs_msg.data = std::move(y_out_);
+  outputs_msg.data = std::move(y);
   pub_output_->publish(outputs_msg);
 }
 
