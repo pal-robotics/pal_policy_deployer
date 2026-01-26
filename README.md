@@ -35,6 +35,8 @@ independent of the robot and policy and can be reused across different deploymen
 They acquire the required observations (e.g. specific joint states), construct the input vector in the expected
 order, and convert model outputs into commands compatible with the appropriate robot controllers.
 
+_(Note: currently only the reaching policy for TIAGo Pro, trained using reinforcement learning and exported to ONNX, is implemented.)_
+
 ### Configuring a policy
 1. **Add trained model** 
 
