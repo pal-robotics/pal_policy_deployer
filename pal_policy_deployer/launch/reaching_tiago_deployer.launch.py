@@ -133,6 +133,15 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
                 }
             ],
         ),
+        Node(
+            package="pal_policy_preprocessor",
+            executable="interactive_marker_node",
+            name="interactive_target_rviz",
+            output="screen",
+            parameters=[{
+                "use_sim_time": LaunchConfiguration("use_sim_time"),
+            }],
+        ),
     ])
 
     launch_description.add_action(policy_nodes)

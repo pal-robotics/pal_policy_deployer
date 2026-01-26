@@ -5,7 +5,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 InteractiveTargetPublisher::InteractiveTargetPublisher()
-: rclcpp::Node("pal_policy_preprocessor_interactive_node")
+: rclcpp::Node("interactive_marker_node")
 {
   // Left target publishers
   pub_left_pos_ = this->create_publisher<geometry_msgs::msg::Point>(
