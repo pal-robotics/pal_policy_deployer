@@ -13,16 +13,21 @@ public:
   explicit Inferer(
     const std::string & node_name,
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
-  virtual ~Inferer() override = default;
+  ~Inferer() override = default;
 
   bool is_ready() const {return ready_;}
 
 protected:
-  virtual std::vector<double> InferOutput(const std::vector<double> & obs) = 0;
+  virtual void InferOutput(const std::vector<double> & obs, std::vector<double> * y) = 0;
   void set_ready(bool v) {ready_ = v;}
+
   size_t obs_dim_{0};
+  size_t output_dim_{0};
+
   std::vector<double> observation_;
+  std::vector<double> y_out_;
   std::mutex observation_mutex_;
+  std::vector<double> obs_local;
 
 private:
   double start_delay_{0.5};
