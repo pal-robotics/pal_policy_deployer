@@ -12,6 +12,15 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
     "default_joint_pos", "");
   default_joint_pos_ = parseDoubles(default_joint_pos_str);
 
+  output_dim_ = this->declare_parameter<int64_t>("output_dimension", 0);
+
+  // ERROR HANDLING -------------------------------
+  if (output_dim_ == 0) {
+    throw std::runtime_error("output_dimension is zero");
+  }
+
+  // -------------------------------
+
   left_default_ = std::vector<double>(
     default_joint_pos_.begin() + 1,
     default_joint_pos_.begin() + 1 + 7
@@ -24,7 +33,7 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor(
 
   msg_left_.data.resize(left_default_.size());
   msg_right_.data.resize(right_default_.size());
-  last_.data.resize(15);
+  last_.data.resize(output_dim_);
 
   min_val_ = this->declare_parameter<std::vector<double>>(
     "minimum_joint_positions", std::vector<double>{});
@@ -48,6 +57,14 @@ void TiagoReachingPostprocessor::postprocessAndPublish(
   // y[0]      torso
   // y[1..7]   left arm
   // y[8..14]  right arm
+
+  if (y.size() != static_cast<size_t>(output_dim_)) {
+    RCLCPP_ERROR_THROTTLE(
+      this->get_logger(), *this->get_clock(), 2000,
+      "Postprocessor got output of size %zu, expected %ld",
+      y.size(), output_dim_);
+    return;
+  }
 
   for (size_t i = 0; i < 7; ++i) {
     msg_left_.data[i] =

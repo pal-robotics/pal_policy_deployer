@@ -38,6 +38,48 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
     this->declare_parameter<std::vector<double>>(
     "initial_pose_right.orientation", std::vector<double>{});
 
+  // ERROR handling -------------------------------
+  if (config_.joint_names.empty()) {
+    throw std::runtime_error("joint_names parameter is empty");
+  }
+
+  if (config_.default_joint_pos.empty()) {
+    throw std::runtime_error("default_joint_pos parameter is empty");
+  }
+
+  if (config_.joint_names.size() != config_.default_joint_pos.size()) {
+    throw std::runtime_error(
+            "joint_names and default_joint_pos size mismatch: " +
+            std::to_string(config_.joint_names.size()) + " vs " +
+            std::to_string(config_.default_joint_pos.size()));
+  }
+
+  if (config_.input_dim == 0 || config_.output_dim == 0) {
+    throw std::runtime_error("input_dimension or output_dimension is zero");
+  }
+
+  const size_t expected_input_dim =
+    config_.joint_names.size() +        // joint pos
+    config_.joint_names.size() +        // joint vel
+    config_.output_dim +                // last action
+    DIM_CMD;                            // command
+
+  if (config_.input_dim != expected_input_dim) {
+    throw std::runtime_error(
+            "input_dimension mismatch: expected " +
+            std::to_string(expected_input_dim) +
+            ", got " +
+            std::to_string(config_.input_dim));
+  }
+
+  if (left_pos_.size() != 3 || right_pos_.size() != 3) {
+    throw std::runtime_error("initial_pose_* .position must have size 3");
+  }
+  if (left_quat_.size() != 4 || right_quat_.size() != 4) {
+    throw std::runtime_error("initial_pose_* .orientation must have size 4");
+  }
+  // -------------------------------
+
   initBuffersFromConfig();
   buildJointIndexMap();
 

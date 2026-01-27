@@ -126,7 +126,6 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
                 POSTPROCESSOR_PARAMS,
                 {
                     "use_sim_time": LaunchConfiguration("use_sim_time"),
-                    "input_dimension": ParameterValue(LaunchConfiguration("input_dimension"), value_type=int),
                     "output_dimension": ParameterValue(LaunchConfiguration("output_dimension"), value_type=int),
                     "action_scale": LaunchConfiguration("action_scale"),
                     "default_joint_pos": LaunchConfiguration("default_joint_pos"),

@@ -29,5 +29,6 @@ private:
   std_msgs::msg::Float64MultiArray last_;
 
   std::vector<double> left_default_, right_default_, default_joint_pos_, min_val_, max_val_;
+  int64_t output_dim_;
   double action_scale_;
 };
