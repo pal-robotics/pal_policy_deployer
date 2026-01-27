@@ -20,11 +20,10 @@ struct PolicyConfig
   int output_dim{0};
 };
 
-class TiagoReaching : public Preprocessor
+class TiagoReachingPreprocessor : public Preprocessor
 {
 public:
-  explicit TiagoReaching(
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit TiagoReachingPreprocessor();
 
 protected:
   void buildInputVector(std::vector<double> * obs) const override;

@@ -6,8 +6,8 @@ using std::placeholders::_1;
 
 static constexpr int DIM_CMD = 14;
 
-TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
-: Preprocessor("tiago_reaching_preprocessor", options)
+TiagoReachingPreprocessor::TiagoReachingPreprocessor()
+: Preprocessor("tiago_reaching_preprocessor")
 {
   const std::string joint_names_str = this->declare_parameter<std::string>("joint_names", "");
   const std::string default_joint_pos_str = this->declare_parameter<std::string>(
@@ -84,27 +84,27 @@ TiagoReaching::TiagoReaching(const rclcpp::NodeOptions & options)
   buildJointIndexMap();
 
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
-    "/joint_states", 1, std::bind(&TiagoReaching::jsCB, this, _1));
+    "/joint_states", 1, std::bind(&TiagoReachingPreprocessor::jsCB, this, _1));
 
   sub_left_pos_ = this->create_subscription<geometry_msgs::msg::Point>(
-    "/left_target_position", 1, std::bind(&TiagoReaching::leftPosCB, this, _1));
+    "/left_target_position", 1, std::bind(&TiagoReachingPreprocessor::leftPosCB, this, _1));
   sub_left_quat_ = this->create_subscription<geometry_msgs::msg::Quaternion>(
-    "/left_target_orientation", 1, std::bind(&TiagoReaching::leftQuatCB, this, _1));
+    "/left_target_orientation", 1, std::bind(&TiagoReachingPreprocessor::leftQuatCB, this, _1));
 
   sub_right_pos_ = this->create_subscription<geometry_msgs::msg::Point>(
-    "/right_target_position", 1, std::bind(&TiagoReaching::rightPosCB, this, _1));
+    "/right_target_position", 1, std::bind(&TiagoReachingPreprocessor::rightPosCB, this, _1));
   sub_right_quat_ = this->create_subscription<geometry_msgs::msg::Quaternion>(
-    "/right_target_orientation", 1, std::bind(&TiagoReaching::rightQuatCB, this, _1));
+    "/right_target_orientation", 1, std::bind(&TiagoReachingPreprocessor::rightQuatCB, this, _1));
 
   sub_last_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-    "/reaching_tiago/last_action", 1, std::bind(&TiagoReaching::lastCB, this, _1));
+    "/reaching_tiago/last_action", 1, std::bind(&TiagoReachingPreprocessor::lastCB, this, _1));
 
 
   obs_.assign(static_cast<size_t>(config_.input_dim), 0.0);
   run(std::chrono::milliseconds(20));
 }
 
-void TiagoReaching::buildInputVector(std::vector<double> * obs) const
+void TiagoReachingPreprocessor::buildInputVector(std::vector<double> * obs) const
 {
   auto it = obs->begin();
   it = std::copy(buff_joint_pos_.begin(), buff_joint_pos_.end(), it);
@@ -113,7 +113,7 @@ void TiagoReaching::buildInputVector(std::vector<double> * obs) const
   it = std::copy(buff_command_.begin(), buff_command_.end(), it);
 }
 
-void TiagoReaching::initBuffersFromConfig()
+void TiagoReachingPreprocessor::initBuffersFromConfig()
 {
   const size_t N = config_.joint_names.size();
   buff_joint_pos_ = config_.default_joint_pos;
@@ -141,14 +141,14 @@ void TiagoReaching::initBuffersFromConfig()
   buff_command_[13] = right_quat_[3];
 }
 
-void TiagoReaching::buildJointIndexMap()
+void TiagoReachingPreprocessor::buildJointIndexMap()
 {
   for (size_t i = 0; i < config_.joint_names.size(); ++i) {
     joint_name_to_index_[config_.joint_names[i]] = i;
   }
 }
 
-void TiagoReaching::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
+void TiagoReachingPreprocessor::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
 {
   for (size_t i = 0; i < msg->name.size(); ++i) {
     auto it = joint_name_to_index_.find(msg->name[i]);
@@ -165,7 +165,7 @@ void TiagoReaching::jsCB(const sensor_msgs::msg::JointState::SharedPtr msg)
   }
 }
 
-void TiagoReaching::leftPosCB(
+void TiagoReachingPreprocessor::leftPosCB(
   const geometry_msgs::msg::Point::SharedPtr msg)
 {
   buff_command_[0] = msg->x;
@@ -175,7 +175,7 @@ void TiagoReaching::leftPosCB(
 }
 
 
-void TiagoReaching::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
+void TiagoReachingPreprocessor::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {
   buff_command_[3] = msg->w;
   buff_command_[4] = msg->x;
@@ -183,14 +183,14 @@ void TiagoReaching::leftQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr m
   buff_command_[6] = msg->z;
 }
 
-void TiagoReaching::rightPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
+void TiagoReachingPreprocessor::rightPosCB(const geometry_msgs::msg::Point::SharedPtr msg)
 {
   buff_command_[7] = msg->x;
   buff_command_[8] = msg->y;
   buff_command_[9] = msg->z;
 }
 
-void TiagoReaching::rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
+void TiagoReachingPreprocessor::rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr msg)
 {
   buff_command_[10] = msg->w;
   buff_command_[11] = msg->x;
@@ -198,7 +198,7 @@ void TiagoReaching::rightQuatCB(const geometry_msgs::msg::Quaternion::SharedPtr 
   buff_command_[13] = msg->z;
 }
 
-void TiagoReaching::lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
+void TiagoReachingPreprocessor::lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
   const size_t n = std::min(buff_last_action_.size(), msg->data.size());
   for (size_t i = 0; i < n; ++i) {
@@ -209,7 +209,7 @@ void TiagoReaching::lastCB(const std_msgs::msg::Float64MultiArray::SharedPtr msg
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<TiagoReaching>());
+  rclcpp::spin(std::make_shared<TiagoReachingPreprocessor>());
   rclcpp::shutdown();
   return 0;
 }

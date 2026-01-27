@@ -12,8 +12,8 @@ namespace fs = std::filesystem;
 
 
 // BASE CLASS IMPLEMENTATION
-Postprocessor::Postprocessor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: rclcpp::Node(node_name, options)
+Postprocessor::Postprocessor(const std::string & node_name)
+: rclcpp::Node(node_name)
 {
   sub_output_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "/inferer/output", 1,

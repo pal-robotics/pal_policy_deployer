@@ -10,8 +10,8 @@ namespace fs = std::filesystem;
 
 
 // BASE CLASS IMPLEMENTATION
-Preprocessor::Preprocessor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: rclcpp::Node(node_name, options)
+Preprocessor::Preprocessor(const std::string & node_name)
+: rclcpp::Node(node_name)
 {
   pub_obs_ =
     this->create_publisher<std_msgs::msg::Float64MultiArray>("/preprocessor/obs", 1);

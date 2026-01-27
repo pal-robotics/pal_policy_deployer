@@ -7,8 +7,7 @@
 class TiagoReachingPostprocessor : public Postprocessor
 {
 public:
-  explicit TiagoReachingPostprocessor(
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit TiagoReachingPostprocessor();
 
 protected:
   void postprocessAndPublish(const std::vector<double> & y) override;

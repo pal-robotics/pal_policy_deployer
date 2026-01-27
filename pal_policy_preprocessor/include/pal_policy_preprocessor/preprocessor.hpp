@@ -12,9 +12,7 @@
 class Preprocessor : public rclcpp::Node
 {
 public:
-  explicit Preprocessor(
-    const std::string & node_name,
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit Preprocessor(const std::string & node_name);
   virtual ~Preprocessor() = default;
 
 protected:

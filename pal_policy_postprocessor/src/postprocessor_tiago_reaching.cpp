@@ -2,9 +2,8 @@
 
 #include <algorithm>
 
-TiagoReachingPostprocessor::TiagoReachingPostprocessor(
-  const rclcpp::NodeOptions & options)
-: Postprocessor("tiago_reaching_postprocessor", options)
+TiagoReachingPostprocessor::TiagoReachingPostprocessor()
+: Postprocessor("tiago_reaching_postprocessor")
 {
   action_scale_ = this->declare_parameter<double>("action_scale", double{0.5});
 

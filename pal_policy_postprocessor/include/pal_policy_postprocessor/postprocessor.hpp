@@ -9,9 +9,7 @@
 class Postprocessor : public rclcpp::Node
 {
 public:
-  explicit Postprocessor(
-    const std::string & node_name,
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit Postprocessor(const std::string & node_name);
   virtual ~Postprocessor() = default;
 
 protected:
