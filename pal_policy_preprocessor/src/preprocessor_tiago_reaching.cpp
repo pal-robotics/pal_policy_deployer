@@ -1,4 +1,5 @@
 #include "pal_policy_preprocessor/preprocessor_tiago_reaching.hpp"
+#include "pal_policy_utils/utils.hpp"
 
 #include <algorithm>
 
@@ -6,6 +7,8 @@ using std::placeholders::_1;
 
 namespace pal_policy_preprocessor
 {
+using pal_policy_utils::split_string;
+using pal_policy_utils::parse_doubles;
 
 static constexpr int DIM_CMD = 14;
 
@@ -19,8 +22,8 @@ TiagoReachingPreprocessor::TiagoReachingPreprocessor()
   const int64_t input_dim = this->declare_parameter<int64_t>("input_dimension", 0);
   const int64_t output_dim = this->declare_parameter<int64_t>("output_dimension", 0);
 
-  config_.joint_names = splitString(joint_names_str, ',');
-  config_.default_joint_pos = parseDoubles(default_joint_pos_str);
+  config_.joint_names = split_string(joint_names_str, ',');
+  config_.default_joint_pos = parse_doubles(default_joint_pos_str);
 
   config_.input_dim = static_cast<size_t>(input_dim);
   config_.output_dim = static_cast<size_t>(output_dim);

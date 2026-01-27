@@ -1,9 +1,11 @@
 #include "pal_policy_postprocessor/postprocessor_tiago_reaching.hpp"
+#include "pal_policy_utils/utils.hpp"
 
 #include <algorithm>
 
 namespace pal_policy_postprocessor
 {
+using pal_policy_utils::parse_doubles;
 
 TiagoReachingPostprocessor::TiagoReachingPostprocessor()
 : Postprocessor("tiago_reaching_postprocessor")
@@ -12,7 +14,7 @@ TiagoReachingPostprocessor::TiagoReachingPostprocessor()
 
   const std::string default_joint_pos_str = this->declare_parameter<std::string>(
     "default_joint_pos", "");
-  default_joint_pos_ = parseDoubles(default_joint_pos_str);
+  default_joint_pos_ = parse_doubles(default_joint_pos_str);
 
   output_dim_ = this->declare_parameter<int64_t>("output_dimension", 0);
 
