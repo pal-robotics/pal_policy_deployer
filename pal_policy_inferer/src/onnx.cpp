@@ -8,8 +8,8 @@
 namespace pal_policy_inferer
 {
 
-OnnxInferer::OnnxInferer(const rclcpp::NodeOptions & options)
-: Inferer("onnx", options),
+OnnxInferer::OnnxInferer()
+: Inferer("onnx_inferer"),
   env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
   mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault))
 {
@@ -125,8 +125,7 @@ void OnnxInferer::InferOutput(const std::vector<double> & obs, std::vector<doubl
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::NodeOptions options;
-  auto node = std::make_shared<pal_policy_inferer::OnnxInferer>(options);
+  auto node = std::make_shared<pal_policy_inferer::OnnxInferer>();
   if (!node->is_ready()) {
     rclcpp::shutdown();
     return 1;

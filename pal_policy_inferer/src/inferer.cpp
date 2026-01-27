@@ -7,8 +7,8 @@ namespace pal_policy_inferer
 {
 
 // BASE CLASS IMPLEMENTATION
-Inferer::Inferer(const std::string & node_name, const rclcpp::NodeOptions & options)
-: rclcpp::Node(node_name, options)
+Inferer::Inferer(const std::string & node_name)
+: rclcpp::Node(node_name)
 {
   sub_obs_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "/preprocessor/obs", 1,

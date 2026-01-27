@@ -15,7 +15,7 @@ namespace pal_policy_inferer
 class OnnxInferer : public Inferer
 {
 public:
-  explicit OnnxInferer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit OnnxInferer();
   ~OnnxInferer() override;
 
 protected:

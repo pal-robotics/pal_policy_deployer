@@ -14,8 +14,7 @@ class Inferer : public rclcpp::Node
 {
 public:
   explicit Inferer(
-    const std::string & node_name,
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+    const std::string & node_name);
   ~Inferer() override = default;
 
   bool is_ready() const {return ready_;}
