@@ -2,6 +2,9 @@
 
 #include <algorithm>
 
+namespace pal_policy_postprocessor
+{
+
 TiagoReachingPostprocessor::TiagoReachingPostprocessor()
 : Postprocessor("tiago_reaching_postprocessor")
 {
@@ -86,10 +89,11 @@ void TiagoReachingPostprocessor::postprocessAndPublish(
   pub_last_->publish(last_);
 }
 
+}
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<TiagoReachingPostprocessor>());
+  rclcpp::spin(std::make_shared<pal_policy_postprocessor::TiagoReachingPostprocessor>());
   rclcpp::shutdown();
   return 0;
 }

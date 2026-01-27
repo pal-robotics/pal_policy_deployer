@@ -8,6 +8,8 @@
 
 namespace fs = std::filesystem;
 
+namespace pal_policy_preprocessor
+{
 
 // BASE CLASS IMPLEMENTATION
 Preprocessor::Preprocessor(const std::string & node_name)
@@ -70,3 +72,5 @@ Preprocessor::parseDoubles(const std::string & str)
   }
   return values;
 }
+
+} // pal_policy_preprocessor

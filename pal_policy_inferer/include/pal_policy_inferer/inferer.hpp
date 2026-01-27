@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+namespace pal_policy_inferer
+{
+
 class Inferer : public rclcpp::Node
 {
 public:
@@ -40,3 +43,5 @@ private:
 
   bool ready_{false};
 };
+
+} // pal_policy_inferer

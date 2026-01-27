@@ -3,6 +3,9 @@
 #include <chrono>
 #include <functional>
 
+namespace pal_policy_inferer
+{
+
 // BASE CLASS IMPLEMENTATION
 Inferer::Inferer(const std::string & node_name, const rclcpp::NodeOptions & options)
 : rclcpp::Node(node_name, options)
@@ -51,3 +54,5 @@ void Inferer::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
   std::lock_guard<std::mutex> lk(observation_mutex_);
   observation_.assign(msg->data.begin(), msg->data.end());
 }
+
+} // namespace pal_policy_inferer

@@ -9,6 +9,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 
+namespace pal_policy_preprocessor
+{
+
 class Preprocessor : public rclcpp::Node
 {
 public:
@@ -33,3 +36,5 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr pub_obs_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
+
+} // pal_policy_preprocessor

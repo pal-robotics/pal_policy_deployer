@@ -4,6 +4,9 @@
 
 #include <vector>
 
+
+namespace pal_policy_postprocessor
+{
 class TiagoReachingPostprocessor : public Postprocessor
 {
 public:
@@ -31,3 +34,6 @@ private:
   int64_t output_dim_;
   double action_scale_;
 };
+
+}
+// namespace pal_policy_postprocessor

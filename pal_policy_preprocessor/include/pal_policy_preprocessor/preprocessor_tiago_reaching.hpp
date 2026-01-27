@@ -11,6 +11,9 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 
+namespace pal_policy_preprocessor
+{
+
 struct PolicyConfig
 {
   std::vector<std::string> joint_names;
@@ -58,3 +61,5 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Quaternion>::SharedPtr sub_right_quat_;
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_last_;
 };
+
+} // pal_policy_preprocessor

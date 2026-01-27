@@ -10,6 +10,8 @@
 
 namespace fs = std::filesystem;
 
+namespace pal_policy_postprocessor
+{
 
 // BASE CLASS IMPLEMENTATION
 Postprocessor::Postprocessor(const std::string & node_name)
@@ -40,4 +42,5 @@ Postprocessor::parseDoubles(const std::string & str)
     }
   }
   return values;
+}
 }

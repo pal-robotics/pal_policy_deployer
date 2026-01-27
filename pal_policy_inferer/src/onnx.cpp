@@ -5,6 +5,9 @@
 #include <stdexcept>
 #include <vector>
 
+namespace pal_policy_inferer
+{
+
 OnnxInferer::OnnxInferer(const rclcpp::NodeOptions & options)
 : Inferer("onnx", options),
   env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
@@ -117,11 +120,13 @@ void OnnxInferer::InferOutput(const std::vector<double> & obs, std::vector<doubl
   }
 }
 
+} // namespace pal_policy_inferer
+
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
-  auto node = std::make_shared<OnnxInferer>(options);
+  auto node = std::make_shared<pal_policy_inferer::OnnxInferer>(options);
   if (!node->is_ready()) {
     rclcpp::shutdown();
     return 1;

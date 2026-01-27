@@ -4,6 +4,9 @@
 
 using std::placeholders::_1;
 
+namespace pal_policy_preprocessor
+{
+
 static constexpr int DIM_CMD = 14;
 
 TiagoReachingPreprocessor::TiagoReachingPreprocessor()
@@ -206,10 +209,12 @@ void TiagoReachingPreprocessor::lastCB(const std_msgs::msg::Float64MultiArray::S
   }
 }
 
+} // pal_policy_preprocessor
+
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<TiagoReachingPreprocessor>());
+  rclcpp::spin(std::make_shared<pal_policy_preprocessor::TiagoReachingPreprocessor>());
   rclcpp::shutdown();
   return 0;
 }

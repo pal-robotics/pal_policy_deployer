@@ -6,6 +6,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 
+namespace pal_policy_postprocessor
+{
 class Postprocessor : public rclcpp::Node
 {
 public:
@@ -22,3 +24,4 @@ private:
 
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sub_output_;
 };
+}

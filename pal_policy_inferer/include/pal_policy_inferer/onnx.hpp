@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 
+namespace pal_policy_inferer
+{
+
 class OnnxInferer : public Inferer
 {
 public:
@@ -32,3 +35,5 @@ private:
   char * in_name_{nullptr};
   char * out_name_{nullptr};
 };
+
+} // pal_policy_inferer
