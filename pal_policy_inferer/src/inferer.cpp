@@ -3,9 +3,12 @@
 #include <chrono>
 #include <functional>
 
+namespace pal_policy_inferer
+{
+
 // BASE CLASS IMPLEMENTATION
-Inferer::Inferer(const std::string & node_name, const rclcpp::NodeOptions & options)
-: rclcpp::Node(node_name, options)
+Inferer::Inferer(const std::string & node_name)
+: rclcpp::Node(node_name)
 {
   sub_obs_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "/preprocessor/obs", 1,
@@ -27,22 +30,20 @@ Inferer::Inferer(const std::string & node_name, const rclcpp::NodeOptions & opti
 // HOOK TO CHILD CLASS
 void Inferer::timerCallback()
 {
-  if (!ready_) {
-    return;
-  }
+  if (!ready_) {return;}
 
-  std::vector<double> obs;
   {
     std::lock_guard<std::mutex> lk(observation_mutex_);
-    obs = observation_;
+    std::copy(observation_.begin(), observation_.end(), obs_local.begin());
   }
 
-  std::vector<double> y = InferOutput(obs);
+  InferOutput(obs_local, &y_out_);
 
   std_msgs::msg::Float64MultiArray outputs_msg;
-  outputs_msg.data = std::move(y);
+  outputs_msg.data = y_out_;
   pub_output_->publish(outputs_msg);
 }
+
 
 void Inferer::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
@@ -53,3 +54,5 @@ void Inferer::obsCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
   std::lock_guard<std::mutex> lk(observation_mutex_);
   observation_.assign(msg->data.begin(), msg->data.end());
 }
+
+} // namespace pal_policy_inferer

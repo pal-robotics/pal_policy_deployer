@@ -9,19 +9,24 @@
 #include <string>
 #include <vector>
 
+namespace pal_policy_inferer
+{
+
 class OnnxInferer : public Inferer
 {
 public:
-  explicit OnnxInferer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit OnnxInferer();
   ~OnnxInferer() override;
 
 protected:
-  std::vector<double> InferOutput(const std::vector<double> & obs) override;
+  void InferOutput(const std::vector<double> & obs, std::vector<double> * y) override;
 
 private:
   std::string model_path_;
 
-  // ONNX Runtime
+  std::vector<float> obs_f_;
+  std::array<int64_t, 2> input_shape_{};
+
   Ort::Env env_;
   Ort::MemoryInfo mem_;
   Ort::AllocatorWithDefaultOptions alloc_;
@@ -30,3 +35,5 @@ private:
   char * in_name_{nullptr};
   char * out_name_{nullptr};
 };
+
+} // pal_policy_inferer

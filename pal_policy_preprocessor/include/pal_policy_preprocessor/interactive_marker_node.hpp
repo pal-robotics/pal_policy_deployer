@@ -9,6 +9,9 @@
 #include <visualization_msgs/msg/interactive_marker_control.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+namespace pal_policy_preprocessor
+{
+
 class InteractiveTargetPublisher : public rclcpp::Node
 {
 public:
@@ -33,3 +36,5 @@ private:
   void processFeedback(
     const interactive_markers::InteractiveMarkerServer::FeedbackConstSharedPtr & feedback);
 };
+
+} // pal_policy_preprocessor

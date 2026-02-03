@@ -9,6 +9,10 @@ ament_auto_add_executable(${PROJECT_NAME}_node
   src/preprocessor_tiago_reaching.cpp
 )
 
+ament_auto_add_executable(interactive_marker_node
+  src/interactive_marker_node.cpp
+)
+
 ament_auto_package(
   INSTALL_TO_SHARE
   config

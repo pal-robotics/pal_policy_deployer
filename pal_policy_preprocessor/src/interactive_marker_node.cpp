@@ -4,8 +4,11 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+namespace pal_policy_preprocessor
+{
+
 InteractiveTargetPublisher::InteractiveTargetPublisher()
-: rclcpp::Node("pal_policy_preprocessor_interactive_node")
+: rclcpp::Node("interactive_marker_node")
 {
   // Left target publishers
   pub_left_pos_ = this->create_publisher<geometry_msgs::msg::Point>(
@@ -160,10 +163,12 @@ void InteractiveTargetPublisher::processFeedback(
   server_->applyChanges();  // update marker server
 }
 
+} // pal_policy_preprocessor
+
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<InteractiveTargetPublisher>();
+  auto node = std::make_shared<pal_policy_preprocessor::InteractiveTargetPublisher>();
   node->init_server();
   rclcpp::spin(node);
   rclcpp::shutdown();
