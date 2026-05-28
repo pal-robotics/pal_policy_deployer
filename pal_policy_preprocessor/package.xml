@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>pal_policy_preprocessor</name>
-  <version>0.0.0</version>
+  <version>1.0.0</version>
   <description>The pal_policy_preprocessor package</description>
 
   <maintainer email="sai.kishor@pal-robotics.com">Sai Kishor Kothakota</maintainer>

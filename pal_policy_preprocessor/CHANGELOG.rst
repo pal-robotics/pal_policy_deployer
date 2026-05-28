@@ -2,8 +2,8 @@
 Changelog for package pal_policy_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2026-05-28)
+------------------
 * Update Maintainer
 * Merge branch 'fix/compilation' into 'humble_devel'
   Fix compilation issue with onnxruntime debian

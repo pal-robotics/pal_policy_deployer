@@ -2,8 +2,8 @@
 Changelog for package pal_policy_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2026-05-28)
+------------------
 * Update Maintainer
 * Merge branch 'sbl/metadatamap' into 'humble_devel'
   Improve ONNX metadata loading
