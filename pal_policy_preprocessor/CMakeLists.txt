@@ -21,8 +21,9 @@ ament_auto_add_executable(interactive_marker_node
   src/interactive_marker_node.cpp
 )
 
-ament_auto_package(
-  INSTALL_TO_SHARE
-  config
-)
+if(ament_cmake_auto_VERSION VERSION_LESS "2.6.0")
+  ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR INSTALL_TO_SHARE config)
+else()
+  ament_auto_package(INSTALL_TO_SHARE config)
+endif()
 
