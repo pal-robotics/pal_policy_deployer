@@ -70,7 +70,7 @@ TiagoReachingPreprocessor::TiagoReachingPreprocessor()
     config_.output_dim +                // last action
     DIM_CMD;                            // command
 
-  if (config_.input_dim != expected_input_dim) {
+  if (config_.input_dim != static_cast<int>(expected_input_dim)) {
     throw std::runtime_error(
             "input_dimension mismatch: expected " +
             std::to_string(expected_input_dim) +

@@ -4,9 +4,17 @@ project(pal_policy_inferer)
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_executable(${PROJECT_NAME}_node 
-src/inferer.cpp
-src/onnx.cpp
+find_library(ONNXRUNTIME_LIB onnxruntime REQUIRED)
+find_path(ONNXRUNTIME_INCLUDE_DIR onnxruntime_cxx_api.h
+  PATH_SUFFIXES onnxruntime
+  REQUIRED)
+
+ament_auto_add_executable(${PROJECT_NAME}_node
+  src/inferer.cpp
+  src/onnx.cpp
 )
+
+target_include_directories(${PROJECT_NAME}_node PRIVATE ${ONNXRUNTIME_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME}_node ${ONNXRUNTIME_LIB})
 
 ament_auto_package()
