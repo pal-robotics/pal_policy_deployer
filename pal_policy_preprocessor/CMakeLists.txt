@@ -6,7 +6,7 @@ ament_auto_find_build_dependencies()
 
 find_library(ONNXRUNTIME_LIB onnxruntime REQUIRED)
 find_path(ONNXRUNTIME_INCLUDE_DIR onnxruntime_cxx_api.h
-  PATHS /usr/local/include/onnxruntime
+  PATH_SUFFIXES onnxruntime
   REQUIRED)
 
 ament_auto_add_executable(${PROJECT_NAME}_node
