@@ -8,12 +8,13 @@
 //   imitation – autoregressive motion policy; initialises from robot joint state and
 //               auto-switches back to policy [0] after a configurable number of frames
 //
-// Inference is triggered by /joint_states. All policies receive every sensor update
-// so that switching is seamless (no stale observations).
+// Inference is triggered by /introspection_data/values (PAL statistics). All policies
+// receive every sensor update so that switching is seamless (no stale observations).
 //
 // Subscribed topics
-//   /joint_states                      sensor_msgs/JointState  (triggers inference)
-//   /imu_sensor_broadcaster/imu        sensor_msgs/Imu
+//   /joint_states                      sensor_msgs/JointState  (for imitation init only)
+//   /introspection_data/names          pal_statistics_msgs/StatisticsNames
+//   /introspection_data/values         pal_statistics_msgs/StatisticsValues  (triggers inference)
 //   /cmd_vel                           geometry_msgs/Twist  (loco policies only)
 //   /odom                              nav_msgs/Odometry    (only if base_lin_vel term is used)
 //
@@ -46,6 +47,8 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 
 #include <pal_statistics/pal_statistics_macros.hpp>
+#include <pal_statistics_msgs/msg/statistics_names.hpp>
+#include <pal_statistics_msgs/msg/statistics_values.hpp>
 
 #include <pal_policy_inferer/action/switch_policy.hpp>
 
@@ -234,6 +237,14 @@ static bool isExcludedJoint(const std::string & joint_name)
          != excluded_action_joints.end();
 }
 
+static int indexVector(const std::vector<std::string> & container, const std::string & key)
+{
+  const auto it = std::find(container.cbegin(), container.cend(), key);
+  if (it == container.cend()) {
+    throw std::runtime_error("Unable to find the key : " + key);
+  }
+  return std::distance(container.cbegin(), it);
+}
 
 // ---- MAIN NODE ----
 
@@ -292,9 +303,14 @@ public:
     sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
       "/joint_states", 1,
       std::bind(&KangMjlabNode::jsCB, this, std::placeholders::_1));
-    sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
-      "/imu_sensor_broadcaster/imu", 1,
-      std::bind(&KangMjlabNode::imuCB, this, std::placeholders::_1));
+    sub_stat_names_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsNames>(
+      "/controller_manager/introspection_data/names",
+      rclcpp::QoS(1).reliable().transient_local(),
+      std::bind(&KangMjlabNode::palStatisticsNamesCb, this, std::placeholders::_1));
+    sub_stat_values_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsValues>(
+      "/controller_manager/introspection_data/values",
+      rclcpp::QoS(1).best_effort(),
+      std::bind(&KangMjlabNode::palStatisticsValuesCb, this, std::placeholders::_1));
     sub_cmd_vel_ = this->create_subscription<geometry_msgs::msg::Twist>(
       "/cmd_vel", 1,
       std::bind(&KangMjlabNode::velCmdCB, this, std::placeholders::_1));
@@ -796,46 +812,11 @@ private:
 
   void jsCB(const sensor_msgs::msg::JointState::ConstSharedPtr msg)
   {
+    // Keep latest joint state for imitation policy initialisation only.
     latest_joint_state_ = *msg;
     if (!joint_state_received_) {
       joint_state_received_ = true;
     }
-
-    for (auto & p : policies_) {
-      if (p.obs_terms.find("joint_pos") != p.obs_terms.end()) {
-        auto & term = p.obs_terms["joint_pos"];
-        term->last_msg_time = msg->header.stamp;
-        for (size_t k = 0; k < p.config.joint_names.size(); ++k) {
-          for (size_t i = 0; i < msg->name.size(); ++i) {
-            if (msg->name[i] == p.config.joint_names[k]) {
-              term->current[k] = msg->position[i] - p.config.default_joint_pos[k];
-              break;
-            }
-          }
-        }
-      }
-
-      if (p.obs_terms.find("joint_vel") != p.obs_terms.end()) {
-        auto & term = p.obs_terms["joint_vel"];
-        term->last_msg_time = msg->header.stamp;
-        for (size_t k = 0; k < p.config.joint_names.size(); ++k) {
-          for (size_t i = 0; i < msg->name.size(); ++i) {
-            if (msg->name[i] == p.config.joint_names[k]) {
-              term->current[k] = msg->velocity[i];
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    if (!imu_received_) {
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *this->get_clock(), 5000,
-        "Waiting for IMU data before running inference...");
-      return;
-    }
-    runInference();
   }
 
   void velCmdCB(const geometry_msgs::msg::Twist::ConstSharedPtr msg)
@@ -865,13 +846,67 @@ private:
     }
   }
 
-  void imuCB(const sensor_msgs::msg::Imu::ConstSharedPtr msg)
+  void palStatisticsNamesCb(const pal_statistics_msgs::msg::StatisticsNames::ConstSharedPtr msg)
   {
+    names_version_ = msg->names_version;
+    pal_statistics_names_ = msg->names;
+  }
+
+  void palStatisticsValuesCb(const pal_statistics_msgs::msg::StatisticsValues::ConstSharedPtr msg)
+  {
+    if (pal_statistics_names_.empty()) {
+      RCLCPP_WARN(get_logger(), "Skipping the loop as the names is not received yet!");
+      return;
+    }
+    if (names_version_ != msg->names_version) {
+      RCLCPP_WARN(
+        get_logger(),
+        "Skipping the reading as the pal statistics names and values version is different");
+      return;
+    }
+
+    auto hasKey = [&](const std::string & k) {
+        return std::find(pal_statistics_names_.cbegin(), pal_statistics_names_.cend(), k)
+               != pal_statistics_names_.cend();
+      };
+    if (!hasKey("state_interface.imu_sensor/orientation.w") ||
+      !hasKey("state_interface.imu_sensor/angular_velocity.x") ||
+      !hasKey("state_interface.imu_sensor/linear_acceleration.x"))
+    {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *this->get_clock(), 5000,
+        "Waiting for IMU statistics — controller not started yet?");
+      return;
+    }
+
+    const auto quat_w_index = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/orientation.w");
+    const auto quat_x_index = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/orientation.x");
+    const auto quat_y_index = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/orientation.y");
+    const auto quat_z_index = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/orientation.z");
+
+    const auto ang_vel_x_ind = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/angular_velocity.x");
+    const auto ang_vel_y_ind = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/angular_velocity.y");
+    const auto ang_vel_z_ind = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/angular_velocity.z");
+
+    const auto lin_accel_x_ind = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/linear_acceleration.x");
+    const auto lin_accel_y_ind = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/linear_acceleration.y");
+    const auto lin_accel_z_ind = indexVector(
+      pal_statistics_names_, "state_interface.imu_sensor/linear_acceleration.z");
+
     imu_orientation_ = Eigen::Quaterniond(
-      msg->orientation.w,
-      msg->orientation.x,
-      msg->orientation.y,
-      msg->orientation.z);
+      msg->values[quat_w_index],
+      msg->values[quat_x_index],
+      msg->values[quat_y_index],
+      msg->values[quat_z_index]);
     imu_received_ = true;
 
     Eigen::Vector3d gravity_world(0.0, 0.0, -1.0);
@@ -882,17 +917,17 @@ private:
       if (p.obs_terms.find("base_ang_vel") != p.obs_terms.end()) {
         auto & term = p.obs_terms["base_ang_vel"];
         term->last_msg_time = stamp;
-        term->current[0] = msg->angular_velocity.x;
-        term->current[1] = msg->angular_velocity.y;
-        term->current[2] = msg->angular_velocity.z;
+        term->current[0] = msg->values[ang_vel_x_ind];
+        term->current[1] = msg->values[ang_vel_y_ind];
+        term->current[2] = msg->values[ang_vel_z_ind];
       }
 
       if (p.obs_terms.find("base_lin_acc") != p.obs_terms.end()) {
         auto & term = p.obs_terms["base_lin_acc"];
         term->last_msg_time = stamp;
-        term->current[0] = msg->linear_acceleration.x;
-        term->current[1] = msg->linear_acceleration.y;
-        term->current[2] = msg->linear_acceleration.z;
+        term->current[0] = msg->values[lin_accel_x_ind];
+        term->current[1] = msg->values[lin_accel_y_ind];
+        term->current[2] = msg->values[lin_accel_z_ind];
       }
 
       if (p.obs_terms.find("imu_projected_gravity") != p.obs_terms.end()) {
@@ -902,7 +937,33 @@ private:
         term->current[1] = gravity_body.y();
         term->current[2] = gravity_body.z();
       }
+
+      if (p.obs_terms.find("base_lin_vel") != p.obs_terms.end()) {
+        RCLCPP_WARN_ONCE(
+          get_logger(),
+          "base_lin_vel term present but not populated from PAL statistics - need odometry source");
+      }
+
+      if (p.obs_terms.find("joint_pos") != p.obs_terms.end() &&
+        p.obs_terms.find("joint_vel") != p.obs_terms.end())
+      {
+        auto & pos_term = p.obs_terms["joint_pos"];
+        auto & vel_term = p.obs_terms["joint_vel"];
+        pos_term->last_msg_time = stamp;
+        vel_term->last_msg_time = stamp;
+        for (size_t k = 0; k < p.config.joint_names.size(); ++k) {
+          const std::string pos_key =
+            "state_interface." + p.config.joint_names[k] + "/position";
+          const std::string vel_key =
+            "state_interface." + p.config.joint_names[k] + "/velocity";
+          const auto jnt_pos_index = indexVector(pal_statistics_names_, pos_key);
+          const auto jnt_vel_index = indexVector(pal_statistics_names_, vel_key);
+          pos_term->current[k] = msg->values[jnt_pos_index] - p.config.default_joint_pos[k];
+          vel_term->current[k] = msg->values[jnt_vel_index];
+        }
+      }
     }
+    runInference();
   }
 
   // ---- LOAD A SINGLE POLICY INSTANCE ----
@@ -1030,8 +1091,12 @@ private:
   sensor_msgs::msg::JointState latest_joint_state_;
   bool joint_state_received_{false};
 
+  uint32_t names_version_{0};
+  std::vector<std::string> pal_statistics_names_;
+
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_js_;
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
+  rclcpp::Subscription<pal_statistics_msgs::msg::StatisticsNames>::SharedPtr sub_stat_names_;
+  rclcpp::Subscription<pal_statistics_msgs::msg::StatisticsValues>::SharedPtr sub_stat_values_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_cmd_vel_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Publisher<control_msgs::msg::MultiDOFCommand>::SharedPtr pub_sub_cmd_;
@@ -1049,7 +1114,11 @@ int main(int argc, char ** argv)
     rclcpp::shutdown();
     return 1;
   }
-  rclcpp::spin(node);
+  rclcpp::Rate rate(50.0);
+  while (rclcpp::ok()) {
+    rclcpp::spin_some(node);
+    rate.sleep();
+  }
   rclcpp::shutdown();
   return 0;
 }
