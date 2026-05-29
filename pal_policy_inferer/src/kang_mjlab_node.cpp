@@ -8,13 +8,12 @@
 //   imitation – autoregressive motion policy; initialises from robot joint state and
 //               auto-switches back to policy [0] after a configurable number of frames
 //
-// Inference is triggered by /introspection_data/values (PAL statistics). All policies
-// receive every sensor update so that switching is seamless (no stale observations).
+// Inference is triggered by /joint_states. All policies receive every sensor update
+// so that switching is seamless (no stale observations).
 //
 // Subscribed topics
-//   /joint_states                      sensor_msgs/JointState
-//   /introspection_data/names          pal_statistics_msgs/StatisticsNames
-//   /introspection_data/values         pal_statistics_msgs/StatisticsValues  (triggers inference)
+//   /joint_states                      sensor_msgs/JointState  (triggers inference)
+//   /imu_sensor_broadcaster/imu        sensor_msgs/Imu
 //   /cmd_vel                           geometry_msgs/Twist  (loco policies only)
 //   /odom                              nav_msgs/Odometry    (only if base_lin_vel term is used)
 //
@@ -47,8 +46,6 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 
 #include <pal_statistics/pal_statistics_macros.hpp>
-#include <pal_statistics_msgs/msg/statistics_names.hpp>
-#include <pal_statistics_msgs/msg/statistics_values.hpp>
 
 #include <pal_policy_inferer/action/switch_policy.hpp>
 
@@ -237,14 +234,6 @@ static bool isExcludedJoint(const std::string & joint_name)
          != excluded_action_joints.end();
 }
 
-static int indexVector(const std::vector<std::string> & container, const std::string & key)
-{
-  const auto it = std::find(container.cbegin(), container.cend(), key);
-  if (it == container.cend()) {
-    throw std::runtime_error("Unable to find the key : " + key);
-  }
-  return std::distance(container.cbegin(), it);
-}
 
 // ---- MAIN NODE ----
 
@@ -303,12 +292,9 @@ public:
     sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
       "/joint_states", 1,
       std::bind(&KangMjlabNode::jsCB, this, std::placeholders::_1));
-    sub_stat_names_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsNames>(
-      "/introspection_data/names", 1,
-      std::bind(&KangMjlabNode::palStatisticsNamesCb, this, std::placeholders::_1));
-    sub_stat_values_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsValues>(
-      "/introspection_data/values", 1,
-      std::bind(&KangMjlabNode::palStatisticsValuesCb, this, std::placeholders::_1));
+    sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
+      "/imu_sensor_broadcaster/imu", 1,
+      std::bind(&KangMjlabNode::imuCB, this, std::placeholders::_1));
     sub_cmd_vel_ = this->create_subscription<geometry_msgs::msg::Twist>(
       "/cmd_vel", 1,
       std::bind(&KangMjlabNode::velCmdCB, this, std::placeholders::_1));
@@ -810,8 +796,8 @@ private:
 
   void jsCB(const sensor_msgs::msg::JointState::ConstSharedPtr msg)
   {
+    latest_joint_state_ = *msg;
     if (!joint_state_received_) {
-      latest_joint_state_ = *msg;
       joint_state_received_ = true;
     }
 
@@ -842,6 +828,14 @@ private:
         }
       }
     }
+
+    if (!imu_received_) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *this->get_clock(), 5000,
+        "Waiting for IMU data before running inference...");
+      return;
+    }
+    runInference();
   }
 
   void velCmdCB(const geometry_msgs::msg::Twist::ConstSharedPtr msg)
@@ -871,58 +865,13 @@ private:
     }
   }
 
-  void palStatisticsNamesCb(const pal_statistics_msgs::msg::StatisticsNames::ConstSharedPtr msg)
+  void imuCB(const sensor_msgs::msg::Imu::ConstSharedPtr msg)
   {
-    names_version_ = msg->names_version;
-    pal_statistics_names_ = msg->names;
-  }
-
-  void palStatisticsValuesCb(const pal_statistics_msgs::msg::StatisticsValues::ConstSharedPtr msg)
-  {
-    if (pal_statistics_names_.empty()) {
-      RCLCPP_WARN(get_logger(), "Skipping the loop as the names is not received yet!");
-      return;
-    }
-    if (names_version_ != msg->names_version) {
-      RCLCPP_WARN(
-        get_logger(),
-        "Skipping the reading as the pal statistics names and values version is different");
-      return;
-    }
-
-    // The controller may be loaded but not yet started, so required keys may be absent
-    // even when names_version matches. Skip silently until all keys are present.
-    auto hasKey = [&](const std::string & k) {
-        return std::find(pal_statistics_names_.cbegin(), pal_statistics_names_.cend(), k)
-               != pal_statistics_names_.cend();
-      };
-    if (!hasKey("base_imu_orientation_W") || !hasKey("base_imu_angular_vel_X") ||
-      !hasKey("base_imu_linear_acc_X"))
-    {
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *this->get_clock(), 5000,
-        "Waiting for IMU statistics — controller not started yet?");
-      return;
-    }
-
-    const auto quat_w_index = indexVector(pal_statistics_names_, "base_imu_orientation_W");
-    const auto quat_z_index = indexVector(pal_statistics_names_, "base_imu_orientation_Z");
-    const auto quat_y_index = indexVector(pal_statistics_names_, "base_imu_orientation_Y");
-    const auto quat_x_index = indexVector(pal_statistics_names_, "base_imu_orientation_X");
-
-    const auto ang_vel_x_ind = indexVector(pal_statistics_names_, "base_imu_angular_vel_X");
-    const auto ang_vel_y_ind = indexVector(pal_statistics_names_, "base_imu_angular_vel_Y");
-    const auto ang_vel_z_ind = indexVector(pal_statistics_names_, "base_imu_angular_vel_Z");
-
-    const auto lin_accel_x_ind = indexVector(pal_statistics_names_, "base_imu_linear_acc_X");
-    const auto lin_accel_y_ind = indexVector(pal_statistics_names_, "base_imu_linear_acc_Y");
-    const auto lin_accel_z_ind = indexVector(pal_statistics_names_, "base_imu_linear_acc_Z");
-
     imu_orientation_ = Eigen::Quaterniond(
-      msg->values[quat_w_index],
-      msg->values[quat_x_index],
-      msg->values[quat_y_index],
-      msg->values[quat_z_index]);
+      msg->orientation.w,
+      msg->orientation.x,
+      msg->orientation.y,
+      msg->orientation.z);
     imu_received_ = true;
 
     Eigen::Vector3d gravity_world(0.0, 0.0, -1.0);
@@ -933,17 +882,17 @@ private:
       if (p.obs_terms.find("base_ang_vel") != p.obs_terms.end()) {
         auto & term = p.obs_terms["base_ang_vel"];
         term->last_msg_time = stamp;
-        term->current[0] = msg->values[ang_vel_x_ind];
-        term->current[1] = msg->values[ang_vel_y_ind];
-        term->current[2] = msg->values[ang_vel_z_ind];
+        term->current[0] = msg->angular_velocity.x;
+        term->current[1] = msg->angular_velocity.y;
+        term->current[2] = msg->angular_velocity.z;
       }
 
       if (p.obs_terms.find("base_lin_acc") != p.obs_terms.end()) {
         auto & term = p.obs_terms["base_lin_acc"];
         term->last_msg_time = stamp;
-        term->current[0] = msg->values[lin_accel_x_ind];
-        term->current[1] = msg->values[lin_accel_y_ind];
-        term->current[2] = msg->values[lin_accel_z_ind];
+        term->current[0] = msg->linear_acceleration.x;
+        term->current[1] = msg->linear_acceleration.y;
+        term->current[2] = msg->linear_acceleration.z;
       }
 
       if (p.obs_terms.find("imu_projected_gravity") != p.obs_terms.end()) {
@@ -953,31 +902,7 @@ private:
         term->current[1] = gravity_body.y();
         term->current[2] = gravity_body.z();
       }
-
-      if (p.obs_terms.find("base_lin_vel") != p.obs_terms.end()) {
-        RCLCPP_WARN_ONCE(
-          get_logger(),
-          "base_lin_vel term present but not populated from IMU - need odometry source");
-      }
-
-      if (p.obs_terms.find("joint_pos") != p.obs_terms.end() &&
-        p.obs_terms.find("joint_vel") != p.obs_terms.end())
-      {
-        auto & pos_term = p.obs_terms["joint_pos"];
-        auto & vel_term = p.obs_terms["joint_vel"];
-        pos_term->last_msg_time = stamp;
-        vel_term->last_msg_time = stamp;
-        for (size_t k = 0; k < p.config.joint_names.size(); ++k) {
-          const std::string pos_str = p.config.joint_names[k] + "_position";
-          const std::string vel_str = p.config.joint_names[k] + "_velocity";
-          const auto jnt_pos_index = indexVector(pal_statistics_names_, pos_str);
-          const auto jnt_vel_index = indexVector(pal_statistics_names_, vel_str);
-          pos_term->current[k] = msg->values[jnt_pos_index] - p.config.default_joint_pos[k];
-          vel_term->current[k] = msg->values[jnt_vel_index];
-        }
-      }
     }
-    runInference();
   }
 
   // ---- LOAD A SINGLE POLICY INSTANCE ----
@@ -1105,12 +1030,8 @@ private:
   sensor_msgs::msg::JointState latest_joint_state_;
   bool joint_state_received_{false};
 
-  uint32_t names_version_{0};
-  std::vector<std::string> pal_statistics_names_;
-
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_js_;
-  rclcpp::Subscription<pal_statistics_msgs::msg::StatisticsNames>::SharedPtr sub_stat_names_;
-  rclcpp::Subscription<pal_statistics_msgs::msg::StatisticsValues>::SharedPtr sub_stat_values_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_cmd_vel_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Publisher<control_msgs::msg::MultiDOFCommand>::SharedPtr pub_sub_cmd_;
