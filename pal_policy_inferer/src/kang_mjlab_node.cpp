@@ -41,6 +41,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <control_msgs/msg/multi_dof_command.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -312,7 +313,7 @@ public:
       "/cmd_vel", 1,
       std::bind(&KangMjlabNode::velCmdCB, this, std::placeholders::_1));
 
-    pub_sub_cmd_ = this->create_publisher<sensor_msgs::msg::JointState>(
+    pub_sub_cmd_ = this->create_publisher<control_msgs::msg::MultiDOFCommand>(
       "/subscriber_controller/desired_state", 1);
 
     switch_action_server_ = rclcpp_action::create_server<SwitchPolicy>(
@@ -728,12 +729,10 @@ private:
       }
     }
 
-    sensor_msgs::msg::JointState cmd_msg;
-    cmd_msg.header.stamp = this->now();
-    cmd_msg.name = p.config.action_joint_names;
-    cmd_msg.position = p.action;
-    cmd_msg.velocity = p.zero_action;
-    cmd_msg.effort = p.zero_action;
+    control_msgs::msg::MultiDOFCommand cmd_msg;
+    cmd_msg.dof_names = p.config.action_joint_names;
+    cmd_msg.values = p.action;
+    cmd_msg.values_dot = p.zero_action;
     pub_sub_cmd_->publish(cmd_msg);
   }
 
@@ -1045,6 +1044,17 @@ private:
       }
     }
 
+    if (!p.config.joint_stiffness.empty() && !p.config.joint_damping.empty()) {
+      RCLCPP_INFO(get_logger(), "[Policy '%s'] Stiffness and damping gains are:", p.name.c_str());
+      for (size_t i = 0; i < p.config.action_joint_names.size(); ++i) {
+        const double stiffness = i < p.config.joint_stiffness.size() ? p.config.joint_stiffness[i] : 0.0;
+        const double damping = i < p.config.joint_damping.size() ? p.config.joint_damping[i] : 0.0;
+        RCLCPP_INFO(
+          get_logger(), "  %s: {p: %f, i: 0.0, d: %f}",
+          p.config.action_joint_names[i].c_str(), stiffness, damping);
+      }
+    }
+
     RCLCPP_INFO(
       get_logger(),
       "[Policy '%s'] task=%s obs_dim=%d (single=%d x history=%d) action_dim=%d joints=%zu/%zu",
@@ -1103,7 +1113,7 @@ private:
   rclcpp::Subscription<pal_statistics_msgs::msg::StatisticsValues>::SharedPtr sub_stat_values_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_cmd_vel_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_sub_cmd_;
+  rclcpp::Publisher<control_msgs::msg::MultiDOFCommand>::SharedPtr pub_sub_cmd_;
 
   rclcpp_action::Server<SwitchPolicy>::SharedPtr switch_action_server_;
 };
