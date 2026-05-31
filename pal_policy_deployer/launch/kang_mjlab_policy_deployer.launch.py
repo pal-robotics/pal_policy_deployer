@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction
+from launch.actions import DeclareLaunchArgument, GroupAction, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
@@ -32,8 +32,50 @@ class LaunchArguments(LaunchArgumentsBase):
     )
 
 
-def declare_actions(launch_description: LaunchDescription, launch_args: LaunchArguments):
+def resolve_policy_model(pkg_share_folder: str, task: str, model: str) -> str:
+    """Validate that the policy model exists and return its directory.
+
+    Mirrors how kang_mjlab_node locates models at runtime (see
+    kang_mjlab_node.cpp::loadPolicy): the model lives in
+    ``<share>/models/<task>/<task>_<model>_mjlab/`` and that directory must
+    contain at least one ``.onnx`` file.
+
+    :param pkg_share_folder: share directory of the pal_policy_deployer package.
+    :param task: policy task name (e.g. ``loco``).
+    :param model: policy model version (e.g. ``v260``).
+    :returns: absolute path to the validated model directory.
+    :raises FileNotFoundError: if the directory is missing or has no ``.onnx`` file.
+    """
+    model_dir = os.path.join(pkg_share_folder, "models", task, f"{task}_{model}_mjlab")
+    if not os.path.isdir(model_dir):
+        raise FileNotFoundError(
+            f"[pal_policy_deployer] Policy model directory not found: '{model_dir}'. "
+            f"Check the 'task' (='{task}') and 'model' (='{model}') launch arguments."
+        )
+    onnx_files = [f for f in os.listdir(model_dir) if f.endswith(".onnx")]
+    if not onnx_files:
+        raise FileNotFoundError(
+            f"[pal_policy_deployer] No .onnx model file found in '{model_dir}' "
+            f"for task='{task}', model='{model}'."
+        )
+    return model_dir
+
+
+def _check_model_and_create_actions(context, *args, **kwargs):
+    """Verify the policy model exists, then create the node and controller actions.
+
+    Runs as an OpaqueFunction so the (CLI-overridable) ``task``/``model`` launch
+    arguments can be resolved at launch time. If the model is missing,
+    ``resolve_policy_model`` raises and the launch aborts with a non-zero exit code
+    before the node or controller are started (the actions below are only returned
+    on the success path).
+    """
     pkg_share_folder = get_package_share_directory("pal_policy_deployer")
+    task = LaunchConfiguration("task").perform(context)
+    model = LaunchConfiguration("model").perform(context)
+
+    # Fail fast (non-zero exit) before launching anything if the model is absent.
+    resolve_policy_model(pkg_share_folder, task, model)
 
     kang_mjlab_node = Node(
         package="pal_policy_inferer",
@@ -56,13 +98,17 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
             controller_name="rl_impedance_controller",
             controller_params_file=os.path.join(
                 pkg_share_folder,
-                "config", "kangaroo_rl_controller.yaml"))
+                "config", "kangaroo_rl_controller.yaml"),
+                extra_spawner_args=["--unload-on-kill"])
          ],
         forwarding=False,
     )
 
-    launch_description.add_action(kang_mjlab_node)
-    launch_description.add_action(rl_impedance_controller)
+    return [kang_mjlab_node, rl_impedance_controller]
+
+
+def declare_actions(launch_description: LaunchDescription, launch_args: LaunchArguments):
+    launch_description.add_action(OpaqueFunction(function=_check_model_and_create_actions))
 
 
 def generate_launch_description():
