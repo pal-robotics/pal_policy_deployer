@@ -2,7 +2,15 @@ from dataclasses import dataclass
 
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, OpaqueFunction
+from launch.actions import (
+    DeclareLaunchArgument,
+    GroupAction,
+    LogInfo,
+    OpaqueFunction,
+    RegisterEventHandler,
+    Shutdown,
+)
+from launch.event_handlers import OnProcessExit
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
@@ -104,7 +112,23 @@ def _check_model_and_create_actions(context, *args, **kwargs):
         forwarding=False,
     )
 
-    return [kang_mjlab_node, rl_impedance_controller]
+    # If the policy node exits for any reason (crash, kill, or normal exit), tear down the
+    # whole launch. Shutting down terminates the controller spawner too, and because it was
+    # spawned with '--unload-on-kill' the controller is unloaded rather than left running
+    # without a policy driving it.
+    shutdown_on_node_exit = RegisterEventHandler(
+        OnProcessExit(
+            target_action=kang_mjlab_node,
+            on_exit=[
+                LogInfo(
+                    msg="[pal_policy_deployer] policy node exited; shutting down the launch "
+                        "(controller will be unloaded)."),
+                Shutdown(reason="pal_policy_deployer node exited"),
+            ],
+        )
+    )
+
+    return [kang_mjlab_node, rl_impedance_controller, shutdown_on_node_exit]
 
 
 def declare_actions(launch_description: LaunchDescription, launch_args: LaunchArguments):
