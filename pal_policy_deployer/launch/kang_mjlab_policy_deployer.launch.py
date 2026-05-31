@@ -15,8 +15,20 @@ from launch_pal.arg_utils import LaunchArgumentsBase
 class LaunchArguments(LaunchArgumentsBase):
     use_sim_time: DeclareLaunchArgument = DeclareLaunchArgument(
         name="use_sim_time",
-        default_value="true",
+        default_value="false",
         description="Use simulation clock.",
+    )
+
+    task: DeclareLaunchArgument = DeclareLaunchArgument(
+        name="task",
+        default_value="loco",
+        description="Task name for the policy to deploy.",
+    )
+
+    model: DeclareLaunchArgument = DeclareLaunchArgument(
+        name="model",
+        default_value="v260",
+        description="Model version of the policy to deploy.",
     )
 
 
@@ -31,8 +43,8 @@ def declare_actions(launch_description: LaunchDescription, launch_args: LaunchAr
         parameters=[{
             "use_sim_time": LaunchConfiguration("use_sim_time"),
             "policies": ["loco"],
-            "loco.task": "loco",
-            "loco.model": "v260",
+            "loco.task": LaunchConfiguration("task"),
+            "loco.model": LaunchConfiguration("model"),
         }],
         remappings=[
             ("/subscriber_controller/desired_state", "/rl_impedance_controller/reference"),
