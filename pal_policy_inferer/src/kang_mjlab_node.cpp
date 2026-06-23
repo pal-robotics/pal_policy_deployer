@@ -869,9 +869,9 @@ private:
         return std::find(pal_statistics_names_.cbegin(), pal_statistics_names_.cend(), k)
                != pal_statistics_names_.cend();
       };
-    if (!hasKey("state_interface.imu_sensor/orientation.w") ||
-      !hasKey("state_interface.imu_sensor/angular_velocity.x") ||
-      !hasKey("state_interface.imu_sensor/linear_acceleration.x"))
+    if (!hasKey("state_interface.torso_imu_sensor/orientation.w") ||
+      !hasKey("state_interface.torso_imu_sensor/angular_velocity.x") ||
+      !hasKey("state_interface.torso_imu_sensor/linear_acceleration.x"))
     {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *this->get_clock(), 5000,
@@ -880,27 +880,27 @@ private:
     }
 
     const auto quat_w_index = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/orientation.w");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/orientation.w");
     const auto quat_x_index = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/orientation.x");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/orientation.x");
     const auto quat_y_index = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/orientation.y");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/orientation.y");
     const auto quat_z_index = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/orientation.z");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/orientation.z");
 
     const auto ang_vel_x_ind = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/angular_velocity.x");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/angular_velocity.x");
     const auto ang_vel_y_ind = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/angular_velocity.y");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/angular_velocity.y");
     const auto ang_vel_z_ind = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/angular_velocity.z");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/angular_velocity.z");
 
     const auto lin_accel_x_ind = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/linear_acceleration.x");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/linear_acceleration.x");
     const auto lin_accel_y_ind = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/linear_acceleration.y");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/linear_acceleration.y");
     const auto lin_accel_z_ind = indexVector(
-      pal_statistics_names_, "state_interface.imu_sensor/linear_acceleration.z");
+      pal_statistics_names_, "state_interface.torso_imu_sensor/linear_acceleration.z");
 
     imu_orientation_ = Eigen::Quaterniond(
       msg->values[quat_w_index],
