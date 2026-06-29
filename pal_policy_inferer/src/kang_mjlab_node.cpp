@@ -98,7 +98,7 @@ struct ObservationTerm
   std::vector<double> current;
   std::deque<std::vector<double>> history;
   rclcpp::Time last_msg_time;
-  double elapsed_time;  // Since sensor update
+  double elapsed_time = 0.0;  // Since sensor update
 
   // stats_prefix disambiguates multiple policies registering the same term name
   ObservationTerm(
