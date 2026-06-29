@@ -12,17 +12,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES action_msgs
 )
 
-find_library(ONNXRUNTIME_LIB onnxruntime REQUIRED)
-find_path(ONNXRUNTIME_INCLUDE_DIR onnxruntime_cxx_api.h
-  PATH_SUFFIXES onnxruntime
-  REQUIRED)
-
 ament_auto_add_executable(${PROJECT_NAME}_node
   src/inferer.cpp
   src/onnx.cpp
 )
-target_include_directories(${PROJECT_NAME}_node PRIVATE ${ONNXRUNTIME_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME}_node ${ONNXRUNTIME_LIB})
+target_link_libraries(${PROJECT_NAME}_node onnxruntime::onnxruntime)
 
 ament_auto_add_executable(kang_mjlab_node src/kang_mjlab_node.cpp)
 target_include_directories(kang_mjlab_node PRIVATE ${EIGEN3_INCLUDE_DIRS})
