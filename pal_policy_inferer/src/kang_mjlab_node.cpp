@@ -15,7 +15,9 @@
 //   /joint_states                      sensor_msgs/JointState  (for imitation init only)
 //   /introspection_data/names          pal_statistics_msgs/StatisticsNames
 //   /introspection_data/values         pal_statistics_msgs/StatisticsValues  (triggers inference)
-//   /cmd_vel                           geometry_msgs/Twist  (loco policies only)
+//   /cmd_vel                           geometry_msgs/Twist  (loco policies only;
+//                                   if no message arrives for >1 s the command term falls
+//                                   back to zero twist until commands resume)
 //   /odom                              nav_msgs/Odometry    (only if base_lin_vel term is used)
 //
 // Published topics
@@ -672,6 +674,23 @@ private:
           }
         }
         time_step_val = static_cast<float>(p.motion.timestep);
+      } else if (p.config.task != "imitation" && cmd_vel_received_) {
+        // Watchdog: if /cmd_vel has not arrived for more than cmd_vel_timeout_sec_,
+        // zero the command term so the policy does not act on a stale velocity command.
+        auto it = p.obs_terms.find("command");
+        if (it != p.obs_terms.end()) {
+          const double since_last = (this->now() - last_cmd_vel_time_).seconds();
+          if (since_last > cmd_vel_timeout_sec_) {
+            if (!cmd_vel_timed_out_) {
+              RCLCPP_WARN(
+                get_logger(),
+                "No cmd_vel for %.2fs (> %.1fs) sending zero twist to policy '%s'",
+                since_last, cmd_vel_timeout_sec_, p.name.c_str());
+              cmd_vel_timed_out_ = true;
+            }
+            std::fill(it->second->current.begin(), it->second->current.end(), 0.0);
+          }
+        }
       }
 
       updateAllHistory(p);
@@ -821,6 +840,13 @@ private:
 
   void velCmdCB(const geometry_msgs::msg::Twist::ConstSharedPtr msg)
   {
+    last_cmd_vel_time_ = this->now();
+    cmd_vel_received_ = true;
+    if (cmd_vel_timed_out_) {
+      RCLCPP_INFO(get_logger(), "cmd_vel resumed restoring velocity commands to the policy");
+      cmd_vel_timed_out_ = false;
+    }
+
     for (auto & p : policies_) {
       if (p.config.task == "imitation") {continue;}
       if (p.obs_terms.find("command") != p.obs_terms.end()) {
@@ -1090,6 +1116,12 @@ private:
   bool imu_received_{false};
   sensor_msgs::msg::JointState latest_joint_state_;
   bool joint_state_received_{false};
+
+  // cmd_vel (joystick) watchdog: feed zero twist if no command arrives within the timeout.
+  static constexpr double cmd_vel_timeout_sec_ = 1.0;
+  rclcpp::Time last_cmd_vel_time_{0, 0, RCL_ROS_TIME};
+  bool cmd_vel_received_{false};   // true after the first /cmd_vel message
+  bool cmd_vel_timed_out_{false};  // edge-tracking flag so we log each transition once
 
   uint32_t names_version_{0};
   std::vector<std::string> pal_statistics_names_;
