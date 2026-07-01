@@ -64,6 +64,12 @@ class LaunchArguments(LaunchArgumentsBase):
         ),
     )
 
+    robot_type: DeclareLaunchArgument = DeclareLaunchArgument(
+        name="robot_type",
+        default_value="lower_body",
+        description="Configuration of the robot hardware",
+    )
+
 
 def resolve_policy_model(pkg_share_folder: str, task: str, model: str) -> str:
     """Validate that the policy model exists and return its directory.
@@ -112,6 +118,7 @@ def _check_model_and_create_actions(context, *args, **kwargs):
     imitation_task = LaunchConfiguration("imitation_task").perform(context)
     imitation_model = LaunchConfiguration("imitation_model").perform(context)
     imitation_frames = LaunchConfiguration("imitation_frames").perform(context)
+    robot_type = LaunchConfiguration("robot_type").perform(context)
 
     # Fail fast (non-zero exit) before launching anything if either model is absent.
     resolve_policy_model(pkg_share_folder, task, model)
@@ -143,7 +150,7 @@ def _check_model_and_create_actions(context, *args, **kwargs):
             controller_name="rl_impedance_controller",
             controller_params_file=os.path.join(
                 pkg_share_folder,
-                "config", "kangaroo_rl_controller.yaml"),
+                "config", f"{robot_type}.yaml"),
                 extra_spawner_args=["--unload-on-kill"])
          ],
         forwarding=False,
