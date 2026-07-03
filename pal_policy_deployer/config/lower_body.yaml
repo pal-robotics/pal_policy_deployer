@@ -1,0 +1,38 @@
+rl_impedance_controller:
+  ros__parameters:
+    type: pid_controller/PidController
+    dof_names:
+      - pelvis_1_joint
+      - pelvis_2_joint
+      - leg_left_1_joint
+      - leg_left_2_joint
+      - leg_left_3_joint
+      - leg_left_length_joint
+      - leg_left_4_joint
+      - leg_left_5_joint
+      - leg_right_1_joint
+      - leg_right_2_joint
+      - leg_right_3_joint
+      - leg_right_length_joint
+      - leg_right_4_joint
+      - leg_right_5_joint
+
+    command_interface: effort
+
+    reference_and_state_interfaces: ["position", "velocity"]
+
+    gains:
+      pelvis_1_joint: {p: 49.940000, i: 0.0, d: 3.179000}
+      pelvis_2_joint: {p: 49.940000, i: 0.0, d: 3.179000}
+      leg_left_1_joint: {p: 100.000000, i: 0.0, d: 6.366000}
+      leg_left_2_joint: {p: 100.000000, i: 0.0, d: 6.366000}
+      leg_left_3_joint: {p: 100.000000, i: 0.0, d: 6.366000}
+      leg_left_length_joint: {p: 1600.000000, i: 0.0, d: 101.859000}
+      leg_left_4_joint: {p: 30.000000, i: 0.0, d: 1.910000}
+      leg_left_5_joint: {p: 30.000000, i: 0.0, d: 1.910000}
+      leg_right_1_joint: {p: 100.000000, i: 0.0, d: 6.366000}
+      leg_right_2_joint: {p: 100.000000, i: 0.0, d: 6.366000}
+      leg_right_3_joint: {p: 100.000000, i: 0.0, d: 6.366000}
+      leg_right_length_joint: {p: 1600.000000, i: 0.0, d: 101.859000}
+      leg_right_4_joint: {p: 30.000000, i: 0.0, d: 1.910000}
+      leg_right_5_joint: {p: 30.000000, i: 0.0, d: 1.910000}
