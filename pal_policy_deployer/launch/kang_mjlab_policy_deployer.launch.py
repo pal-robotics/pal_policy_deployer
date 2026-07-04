@@ -47,13 +47,13 @@ class LaunchArguments(LaunchArgumentsBase):
 
     imitation_model: DeclareLaunchArgument = DeclareLaunchArgument(
         name="imitation_model",
-        default_value="v472",
+        default_value="v719",
         description="Model version of the secondary (imitation) policy.",
     )
 
     imitation_frames: DeclareLaunchArgument = DeclareLaunchArgument(
         name="imitation_frames",
-        default_value="305",
+        default_value="147",
         description=(
             "Auto-return frame budget for the imitation policy: after this many "
             "inference frames the node switches back to the primary policy. "
