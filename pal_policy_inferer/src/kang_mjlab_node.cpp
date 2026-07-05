@@ -110,6 +110,12 @@ struct ObservationTerm
   {
     const std::string full_name = "elapsed_time." + stats_prefix + name;
     REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, full_name, &elapsed_time);
+    if(name.compare("imu_projected_gravity") == 0 && current.size() == 3)
+    {
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "imu_projected_gravity.x", &current[0]);
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "imu_projected_gravity.y", &current[1]);
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "imu_projected_gravity.z", &current[2]);
+    }
   }
 
   void initHistory(int history_length)
@@ -936,7 +942,7 @@ private:
     imu_received_ = true;
 
     Eigen::Vector3d gravity_world(0.0, 0.0, -1.0);
-    Eigen::Vector3d gravity_body = imu_orientation_.conjugate() * gravity_world;
+    Eigen::Vector3d gravity_body = imu_orientation_.normalized().conjugate() * gravity_world;
 
     const rclcpp::Time stamp(msg->header.stamp);
     for (auto & p : policies_) {
