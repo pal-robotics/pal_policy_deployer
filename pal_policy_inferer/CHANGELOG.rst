@@ -2,8 +2,8 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.1.2 (2026-07-05)
+------------------
 * Merge branch 'fix/build_warnings' into 'humble-devel'
   Fix build warnings
   See merge request control/pal_policy_deployer!21
