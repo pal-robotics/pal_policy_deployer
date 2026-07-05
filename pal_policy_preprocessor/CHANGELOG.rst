@@ -2,6 +2,9 @@
 Changelog for package pal_policy_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.1.0 (2026-07-05)
 ------------------
 * Merge branch 'migrate/kangaroo_policy/ros2' into 'humble-devel'

@@ -2,6 +2,9 @@
 Changelog for package pal_policy_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.1.0 (2026-07-05)
 ------------------
 
