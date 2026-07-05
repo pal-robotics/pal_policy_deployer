@@ -2,6 +2,49 @@
 Changelog for package pal_policy_deployer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Change default policy to v315
+* Merge branch 'reduce/update_rate' into 'humble-devel'
+  Reduce the PID control to 1000 Hz for stability
+  See merge request control/pal_policy_deployer!20
+* Reduce the PID control to 1000 Hz for stability
+* Merge branch 'add/flat_walking_policies' into 'humble-devel'
+  Add flat walking policies
+  See merge request control/pal_policy_deployer!19
+* Add flatç walking policy v534
+* Add flat walking policy v315
+* Merge branch 'stairs_policies' into 'humble-devel'
+  Stairs policies
+  See merge request control/pal_policy_deployer!18
+* Forward policies
+  636 is the best one
+  639 goes up quite well deviates to the left
+* Backwards policies
+  Recommended speeds:
+  - 0.4 lin x
+  - 0.3 ang z
+  - 0.0 lin y
+* Merge branch 'migrate/kangaroo_policy/ros2' into 'humble-devel'
+  Add nice jumping policy
+  See merge request control/pal_policy_deployer!16
+* Add nice jumping policy
+* Merge branch 'migrate/kangaroo_policy/ros2' into 'humble-devel'
+  Migrate kangaroo policy node to ros2
+  See merge request control/pal_policy_deployer!14
+* Merge branch 'add/type_impedance_params' into 'migrate/kangaroo_policy/ros2'
+  LB config and proper launch
+  See merge request control/pal_policy_deployer!15
+* Robot type launch arg
+* Add immitation policy 472
+* Add support for multi policies
+* Add policy 265 for testing
+* Kill the spawner if the policy node dies
+* Make sure the model exists before launching the node and the controller
+* add arguments for task and the model
+* Add launch and config information of the rl controller pid
+* Contributors: Sai Kishor Kothakota, Óscar Martínez
+
 1.0.0 (2026-05-28)
 ------------------
 * Update Maintainer

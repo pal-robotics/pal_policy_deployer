@@ -2,6 +2,27 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'add/introspection' into 'humble-devel'
+  Add projected gravity and orientation normalization
+  See merge request control/pal_policy_deployer!17
+* Register received cmd_vel as PAL statistics for non-imitation policies
+* Add projected gravity and orientation normalization
+* Merge branch 'migrate/kangaroo_policy/ros2' into 'humble-devel'
+  Migrate kangaroo policy node to ros2
+  See merge request control/pal_policy_deployer!14
+* Add logic to send zero twist to the policy on cmd_vel timeout
+* Initialize elapsed_time to zero
+* Use onnxruntime_vendor package instead of onnxruntime-dev dependency
+* Change the IMU naming to torso_imu
+* Add pid_controller exec dependency
+* Reuse the part from the introspection data published from the controller manager
+* Add a working version of the joint states and imu to build the observation vector
+* Add changes to use the PID controller
+* Add first version of the migration
+* Contributors: Sai Kishor Kothakota
+
 1.0.0 (2026-05-28)
 ------------------
 * Update Maintainer

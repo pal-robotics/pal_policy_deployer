@@ -2,6 +2,9 @@
 Changelog for package pal_policy_postprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.0.0 (2026-05-28)
 ------------------
 * Update Maintainer

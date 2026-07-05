@@ -2,6 +2,14 @@
 Changelog for package pal_policy_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'migrate/kangaroo_policy/ros2' into 'humble-devel'
+  Migrate kangaroo policy node to ros2
+  See merge request control/pal_policy_deployer!14
+* Use onnxruntime_vendor package instead of onnxruntime-dev dependency
+* Contributors: Sai Kishor Kothakota
+
 1.0.0 (2026-05-28)
 ------------------
 * Update Maintainer
