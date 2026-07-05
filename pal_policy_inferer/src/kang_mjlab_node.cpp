@@ -22,7 +22,9 @@
 //
 // Published topics
 //   /subscriber_controller/desired_state  sensor_msgs/JointState
-//   pal_policy_deployer_statistics        PAL statistics (elapsed time per observation term)
+//   pal_policy_deployer_statistics        PAL statistics (elapsed time per observation term;
+//                                   also carries the raw received cmd_vel.{linear_x,linear_y,
+//                                   angular_z} for non-imitation policies)
 //
 // Action server
 //   ~/switch_policy  pal_policy_inferer/action/SwitchPolicy
@@ -110,6 +112,21 @@ struct ObservationTerm
   {
     const std::string full_name = "elapsed_time." + stats_prefix + name;
     REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, full_name, &elapsed_time);
+    if(name.compare("imu_projected_gravity") == 0 && current.size() == 3)
+    {
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "imu_projected_gravity.x", &current[0]);
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "imu_projected_gravity.y", &current[1]);
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "imu_projected_gravity.z", &current[2]);
+    }
+    if(name.compare("command") == 0 && current.size() == 3)
+    {
+      // dim==3 for the "command" term only occurs for non-imitation policies:
+      // getObservationTermDim() returns mot.commandDim() (= num_joints*2, always even)
+      // for imitation, and 3 otherwise.
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "cmd_vel.linear_x", &current[0]);
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "cmd_vel.linear_y", &current[1]);
+      REGISTER_VARIABLE(node, POLICY_DEPLOYER_TOPIC, "cmd_vel.angular_z", &current[2]);
+    }
   }
 
   void initHistory(int history_length)
@@ -936,7 +953,7 @@ private:
     imu_received_ = true;
 
     Eigen::Vector3d gravity_world(0.0, 0.0, -1.0);
-    Eigen::Vector3d gravity_body = imu_orientation_.conjugate() * gravity_world;
+    Eigen::Vector3d gravity_body = imu_orientation_.normalized().conjugate() * gravity_world;
 
     const rclcpp::Time stamp(msg->header.stamp);
     for (auto & p : policies_) {
