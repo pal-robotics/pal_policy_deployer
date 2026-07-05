@@ -35,7 +35,7 @@ class LaunchArguments(LaunchArgumentsBase):
 
     model: DeclareLaunchArgument = DeclareLaunchArgument(
         name="model",
-        default_value="v282",
+        default_value="v315",
         description="Model version of the primary (default-active) policy.",
     )
 
