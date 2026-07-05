@@ -1,6 +1,7 @@
 rl_impedance_controller:
   ros__parameters:
     type: pid_controller/PidController
+    update_rate: 1000
     dof_names:
       - pelvis_1_joint
       - pelvis_2_joint
