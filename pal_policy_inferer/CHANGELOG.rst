@@ -2,8 +2,8 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.1.0 (2026-07-05)
+------------------
 * Merge branch 'add/introspection' into 'humble-devel'
   Add projected gravity and orientation normalization
   See merge request control/pal_policy_deployer!17
