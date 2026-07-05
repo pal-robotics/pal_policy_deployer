@@ -2,6 +2,9 @@
 Changelog for package pal_policy_deployer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.1.1 (2026-07-05)
 ------------------
 

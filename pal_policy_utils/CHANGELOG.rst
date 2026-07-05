@@ -2,6 +2,14 @@
 Changelog for package pal_policy_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'fix/build_warnings' into 'humble-devel'
+  Fix build warnings
+  See merge request control/pal_policy_deployer!21
+* Fix build warnings
+* Contributors: Sai Kishor Kothakota
+
 1.1.1 (2026-07-05)
 ------------------
 
