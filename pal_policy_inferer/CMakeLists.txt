@@ -5,6 +5,7 @@ find_package(ament_cmake_auto REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(onnxruntime_vendor REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -17,6 +18,12 @@ ament_auto_add_executable(${PROJECT_NAME}_node
   src/onnx.cpp
 )
 target_link_libraries(${PROJECT_NAME}_node onnxruntime::onnxruntime)
+# Ensure onnxruntime library can be found at runtime regardless of how it was installed above.
+# onnxruntime_vendor installs libonnxruntime.so under opt/onnxruntime_vendor/lib/ relative to the
+# install prefix, so that directory must be in the RPATH alongside the standard lib/.
+set_target_properties(${PROJECT_NAME}_node PROPERTIES
+  INSTALL_RPATH "\$ORIGIN/../lib;\$ORIGIN/../opt/onnxruntime_vendor/lib;${CMAKE_INSTALL_PREFIX}/lib"
+)
 
 ament_auto_add_executable(kang_mjlab_node src/kang_mjlab_node.cpp)
 target_include_directories(kang_mjlab_node PRIVATE ${EIGEN3_INCLUDE_DIRS})
