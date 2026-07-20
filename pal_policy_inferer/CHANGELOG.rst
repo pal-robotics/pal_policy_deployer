@@ -2,6 +2,14 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'fix/missing/library' into 'humble-devel'
+  Fix the issue of the missing library libonnxruntime.so.1
+  See merge request control/pal_policy_deployer!25
+* Fix the issue of the missing library libonnxruntime.so.1
+* Contributors: Sai Kishor Kothakota
+
 1.1.2 (2026-07-05)
 ------------------
 * Merge branch 'fix/build_warnings' into 'humble-devel'
