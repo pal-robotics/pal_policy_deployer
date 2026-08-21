@@ -2,6 +2,14 @@
 Changelog for package pal_policy_postprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'fix/ament_index/deprecations' into 'humble-devel'
+  Fix ament cmake deprecations
+  See merge request control/pal_policy_deployer!28
+* Fix ament cmake deprecations
+* Contributors: Sai Kishor Kothakota
+
 1.2.1 (2026-08-21)
 ------------------
 
