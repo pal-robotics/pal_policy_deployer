@@ -2,6 +2,14 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'cleanup/dependencies' into 'humble-devel'
+  Cleanup unused headers and their dependencies
+  See merge request control/pal_policy_deployer!27
+* Cleanup unused headers and their dependencies
+* Contributors: Sai Kishor Kothakota
+
 1.1.3 (2026-07-20)
 ------------------
 * Merge branch 'fix/missing/library' into 'humble-devel'
