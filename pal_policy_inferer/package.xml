@@ -21,11 +21,9 @@
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>tf2</depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <depend>eigen3_cmake_module</depend>
   <depend>eigen</depend>
-  <depend>message_filters</depend>
   <depend>pal_statistics</depend>
   <depend>pal_statistics_msgs</depend>
   <depend>ament_index_cpp</depend>

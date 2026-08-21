@@ -43,12 +43,8 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <std_msgs/msg/float64_multi_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <control_msgs/msg/multi_dof_command.hpp>
-
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
 
 #include <pal_statistics/pal_statistics_macros.hpp>
 #include <pal_statistics_msgs/msg/statistics_names.hpp>
@@ -62,16 +58,12 @@
 #include <Eigen/Geometry>
 
 #include <algorithm>
-#include <array>
 #include <atomic>
-#include <cmath>
 #include <deque>
 #include <filesystem>
-#include <fstream>
 #include <functional>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <sstream>
 #include <string>
 #include <thread>
