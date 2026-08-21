@@ -1,7 +1,7 @@
 #include "pal_policy_preprocessor/interactive_marker_node.hpp"
 #include <functional>
 
-#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Quaternion.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace pal_policy_preprocessor
