@@ -2,6 +2,9 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.2.0 (2026-08-21)
 ------------------
 * Merge branch 'cleanup/dependencies' into 'humble-devel'
