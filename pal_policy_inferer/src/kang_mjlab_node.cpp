@@ -38,7 +38,15 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+
+#include <ament_index_cpp/version.h>
+// get_package_share_directory() was replaced by get_package_share_path() in
+// ament_index_cpp >= 1.13.2 (https://github.com/ament/ament_index/pull/120).
+#if AMENT_INDEX_CPP_VERSION_GTE(1, 13, 2)
+#include <ament_index_cpp/get_package_share_path.hpp>
+#else
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#endif
 
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -1007,8 +1015,13 @@ private:
   {
     p.config.task = task;
 
+#if AMENT_INDEX_CPP_VERSION_GTE(1, 13, 2)
+    const std::string pkg_root =
+      ament_index_cpp::get_package_share_path("pal_policy_deployer").string();
+#else
     const std::string pkg_root =
       ament_index_cpp::get_package_share_directory("pal_policy_deployer");
+#endif
     const std::string config_dir = pkg_root + "/models/" + task + "/" + task + "_" + model_name +
       "_mjlab/";
 
