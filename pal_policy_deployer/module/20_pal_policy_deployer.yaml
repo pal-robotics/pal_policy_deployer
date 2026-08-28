@@ -1,0 +1,6 @@
+pal_policy_deployer:
+  launch: "pal_policy_deployer kang_mjlab_policy_deployer.launch.py
+            robot_type:=full_body_4dof
+            model:=v265
+            activate_impedance_controller:=False"
+  waits: ["default_broadcasters"]
