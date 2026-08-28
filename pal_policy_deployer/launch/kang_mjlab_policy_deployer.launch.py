@@ -35,7 +35,7 @@ class LaunchArguments(LaunchArgumentsBase):
 
     model: DeclareLaunchArgument = DeclareLaunchArgument(
         name="model",
-        default_value="v315",
+        default_value="v265",
         description="Model version of the primary (default-active) policy.",
     )
 
@@ -47,13 +47,13 @@ class LaunchArguments(LaunchArgumentsBase):
 
     imitation_model: DeclareLaunchArgument = DeclareLaunchArgument(
         name="imitation_model",
-        default_value="v719",
+        default_value="v30",
         description="Model version of the secondary (imitation) policy.",
     )
 
     imitation_frames: DeclareLaunchArgument = DeclareLaunchArgument(
         name="imitation_frames",
-        default_value="147",
+        default_value="300",
         description=(
             "Auto-return frame budget for the imitation policy: after this many "
             "inference frames the node switches back to the primary policy. "
@@ -66,7 +66,7 @@ class LaunchArguments(LaunchArgumentsBase):
 
     robot_type: DeclareLaunchArgument = DeclareLaunchArgument(
         name="robot_type",
-        default_value="lower_body",
+        default_value="full_body_4dof",
         description="Configuration of the robot hardware",
     )
 
