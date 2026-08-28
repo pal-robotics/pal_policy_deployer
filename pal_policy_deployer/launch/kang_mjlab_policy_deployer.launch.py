@@ -70,6 +70,13 @@ class LaunchArguments(LaunchArgumentsBase):
         description="Configuration of the robot hardware",
     )
 
+    activate_impedance_controller: DeclareLaunchArgument = DeclareLaunchArgument(
+        name='activate_impedance_controller',
+        default_value='True',
+        choices=['True', 'False'],
+        description='Argument to choose whether to activate the impedance '
+                    'controller or leave it configured and in inactive state')
+
 
 def resolve_policy_model(pkg_share_folder: str, task: str, model: str) -> str:
     """Validate that the policy model exists and return its directory.
@@ -119,6 +126,7 @@ def _check_model_and_create_actions(context, *args, **kwargs):
     imitation_model = LaunchConfiguration("imitation_model").perform(context)
     imitation_frames = LaunchConfiguration("imitation_frames").perform(context)
     robot_type = LaunchConfiguration("robot_type").perform(context)
+    activate_impedance_controller = LaunchConfiguration("activate_impedance_controller").perform(context)
 
     # Fail fast (non-zero exit) before launching anything if either model is absent.
     resolve_policy_model(pkg_share_folder, task, model)
@@ -145,13 +153,17 @@ def _check_model_and_create_actions(context, *args, **kwargs):
         ],
     )
 
+    if activate_impedance_controller == "True":
+        extra_spawner_args = ["--unload-on-kill"]
+    else:
+        extra_spawner_args = ["--inactive"]
     rl_impedance_controller = GroupAction(
         [generate_load_controller_launch_description(
             controller_name="rl_impedance_controller",
             controller_params_file=os.path.join(
                 pkg_share_folder,
                 "config", f"{robot_type}.yaml"),
-                extra_spawner_args=["--unload-on-kill"])
+            extra_spawner_args=extra_spawner_args)
          ],
         forwarding=False,
     )
