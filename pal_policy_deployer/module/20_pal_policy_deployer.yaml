@@ -1,0 +1,6 @@
+pal_policy_deployer:
+  launch: "pal_policy_deployer kang_mjlab_policy_deployer.launch.py
+            has_pelvis:=@has_pelvis@
+            arm_type:=@arm_type@
+            activate_impedance_controller:=False"
+  waits: ["default_broadcasters"]
