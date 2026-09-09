@@ -16,6 +16,7 @@
 
   <depend>std_msgs</depend>
 
+  <exec_depend>launch_pal</exec_depend>
   <exec_depend>pal_policy_inferer</exec_depend>
   <exec_depend>pal_policy_preprocessor</exec_depend>
   <exec_depend>pal_policy_postprocessor</exec_depend>
