@@ -57,6 +57,8 @@ if(BUILD_TESTING)
     target_compile_definitions(test_kang_mjlab_inference PRIVATE
       KANG_TEST_IMITATION_MODEL_DIR="${_kang_test_model_dir}")
   endif()
+
+  ament_auto_add_gtest(test_impedance_gains test/test_impedance_gains.cpp)
 endif()
 
 ament_export_dependencies(rosidl_default_runtime)
