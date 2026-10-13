@@ -40,6 +40,14 @@ target_link_libraries(kang_mjlab_node kang_mjlab_policy)
 target_include_directories(kang_mjlab_node PRIVATE ${EIGEN3_INCLUDE_DIRS})
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 target_link_libraries(kang_mjlab_node "${cpp_typesupport_target}")
+# kang_mjlab_node.cpp peaks at ~2 GB RAM with -O2 -g (rclcpp/rclcpp_action template
+# instantiation + debug info), which OOMs the debian build. -g1 (backtraces/line numbers,
+# no local variables) and a more eager GCC garbage collector bring it to ~1.2 GB at the
+# cost of ~10% compile time. -g1 comes after the distro's -g, so it wins.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(kang_mjlab_node PRIVATE
+    -g1 --param=ggc-min-expand=20 --param=ggc-min-heapsize=32768)
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
