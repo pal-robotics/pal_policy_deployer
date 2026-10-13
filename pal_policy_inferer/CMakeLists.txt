@@ -25,7 +25,11 @@ set_target_properties(${PROJECT_NAME}_node PROPERTIES
   INSTALL_RPATH "\$ORIGIN/../lib;\$ORIGIN/../opt/onnxruntime_vendor/lib;${CMAKE_INSTALL_PREFIX}/lib"
 )
 
+# ROS/ONNX-free policy types and helpers, split out so they can be unit tested.
+ament_auto_add_library(kang_mjlab_policy SHARED src/kang_mjlab_policy.cpp)
+
 ament_auto_add_executable(kang_mjlab_node src/kang_mjlab_node.cpp)
+target_link_libraries(kang_mjlab_node kang_mjlab_policy)
 target_include_directories(kang_mjlab_node PRIVATE ${EIGEN3_INCLUDE_DIRS})
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 target_link_libraries(kang_mjlab_node "${cpp_typesupport_target}")

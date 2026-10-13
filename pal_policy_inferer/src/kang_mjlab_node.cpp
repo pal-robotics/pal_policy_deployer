@@ -59,6 +59,7 @@
 #include <pal_statistics_msgs/msg/statistics_values.hpp>
 
 #include <pal_policy_inferer/action/switch_policy.hpp>
+#include "pal_policy_inferer/kang_mjlab_policy.hpp"
 
 #include <onnxruntime_cxx_api.h>
 
@@ -80,12 +81,6 @@
 namespace fs = std::filesystem;
 
 static const std::string POLICY_DEPLOYER_TOPIC = "pal_policy_deployer_statistics";
-
-// Joints to exclude from action outputs (mechanically constrained / mimic).
-static const std::vector<std::string> excluded_action_joints = {
-    "leg_left_femur_joint", "leg_left_knee_joint",
-    "leg_right_femur_joint", "leg_right_knee_joint"
-};
 
 namespace pal_policy_inferer
 {
@@ -144,64 +139,6 @@ struct ObservationTerm
   }
 };
 
-// ---- AUTOREGRESSIVE MOTION STATE ----
-
-struct MotionState
-{
-  std::vector<double> joint_pos;
-  std::vector<double> joint_vel;
-  int num_joints = 0;
-  int timestep = 0;
-  int frames = 0;
-  bool loaded = false;
-
-  std::vector<double> getCommand() const
-  {
-    std::vector<double> cmd;
-    cmd.reserve(num_joints * 2);
-    cmd.insert(cmd.end(), joint_pos.begin(), joint_pos.end());
-    cmd.insert(cmd.end(), joint_vel.begin(), joint_vel.end());
-    return cmd;
-  }
-
-  int commandDim() const {return num_joints * 2;}
-
-  void updateFromOutputs(
-    const float * out_joint_pos, int nj,
-    const float * out_joint_vel, int /*nj2*/)
-  {
-    for (int i = 0; i < nj && i < num_joints; ++i) {
-      joint_pos[i] = out_joint_pos[i];
-      joint_vel[i] = out_joint_vel[i];
-    }
-  }
-};
-
-// ---- POLICY CONFIGURATION ----
-
-struct PolicyConfig
-{
-  std::string run_path;
-  std::string task;  // "loco" or "imitation"
-  std::vector<std::string> joint_names;
-  std::vector<std::string> action_joint_names;
-  std::vector<double> default_joint_pos;
-  std::vector<double> action_offset;
-  std::vector<double> action_scale;
-  std::vector<double> joint_stiffness;
-  std::vector<double> joint_damping;
-  std::vector<std::string> observation_names;
-  int obs_dim = 0;
-  int action_dim = 0;
-  int history_length = 0;
-  int single_obs_dim = 0;
-  int num_inputs = 0;
-  int num_outputs = 0;
-  int out_idx_actions = -1;
-  int out_idx_joint_pos = -1;
-  int out_idx_joint_vel = -1;
-};
-
 // ---- POLICY INSTANCE ----
 // All state for one loaded policy, including its ONNX session and observation terms.
 
@@ -225,45 +162,6 @@ struct PolicyInstance
   std::vector<double> action;
   std::vector<double> zero_action;
 };
-
-// ---- UTILITY FUNCTIONS ----
-
-static std::vector<std::string> splitString(const std::string & str, char delimiter)
-{
-  std::vector<std::string> tokens;
-  std::stringstream ss(str);
-  std::string token;
-  while (std::getline(ss, token, delimiter)) {
-    tokens.push_back(token);
-  }
-  return tokens;
-}
-
-static std::vector<double> parseDoubles(const std::string & str)
-{
-  std::vector<double> values;
-  std::stringstream ss(str);
-  std::string token;
-  while (std::getline(ss, token, ',')) {
-    values.push_back(std::stod(token));
-  }
-  return values;
-}
-
-static bool isExcludedJoint(const std::string & joint_name)
-{
-  return std::find(excluded_action_joints.begin(), excluded_action_joints.end(), joint_name)
-         != excluded_action_joints.end();
-}
-
-static int indexVector(const std::vector<std::string> & container, const std::string & key)
-{
-  const auto it = std::find(container.cbegin(), container.cend(), key);
-  if (it == container.cend()) {
-    throw std::runtime_error("Unable to find the key : " + key);
-  }
-  return std::distance(container.cbegin(), it);
-}
 
 // ---- MAIN NODE ----
 
@@ -457,24 +355,6 @@ private:
       get_logger(), "Motion initialized for policy '%s': %d joints, frames=%d",
       p.name.c_str(), p.motion.num_joints, p.motion.frames);
     return true;
-  }
-
-  // ---- OBSERVATION TERM DIMENSION CALCULATOR ----
-
-  static int getObservationTermDim(
-    const PolicyConfig & cfg, const MotionState & mot, const std::string & term_name)
-  {
-    if (term_name == "base_ang_vel") {return 3;}
-    if (term_name == "base_lin_vel") {return 3;}
-    if (term_name == "base_lin_acc") {return 3;}
-    if (term_name == "imu_projected_gravity") {return 3;}
-    if (term_name == "joint_pos") {return static_cast<int>(cfg.joint_names.size());}
-    if (term_name == "joint_vel") {return static_cast<int>(cfg.joint_names.size());}
-    if (term_name == "actions") {return static_cast<int>(cfg.action_joint_names.size());}
-    if (term_name == "command") {
-      return (cfg.task == "imitation") ? mot.commandDim() : 3;
-    }
-    return -1;
   }
 
   // ---- OBSERVATION TERM INITIALIZATION ----
