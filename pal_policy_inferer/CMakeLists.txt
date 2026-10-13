@@ -34,6 +34,12 @@ target_include_directories(kang_mjlab_node PRIVATE ${EIGEN3_INCLUDE_DIRS})
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 target_link_libraries(kang_mjlab_node "${cpp_typesupport_target}")
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_kang_mjlab_policy test/test_kang_mjlab_policy.cpp)
+  target_link_libraries(test_kang_mjlab_policy kang_mjlab_policy)
+endif()
+
 ament_export_dependencies(rosidl_default_runtime)
 if(ament_cmake_auto_VERSION VERSION_LESS "2.6.0")
   ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR)
