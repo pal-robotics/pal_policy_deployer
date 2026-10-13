@@ -29,6 +29,12 @@
 // Action server
 //   ~/switch_policy  pal_policy_inferer/action/SwitchPolicy
 //
+// Impedance gains
+//   At startup, on every switch_policy request and on the imitation auto-switch-back, the
+//   active policy's ONNX joint_stiffness/joint_damping are written to
+//   /rl_impedance_controller gains.<joint>.p / gains.<joint>.d (old -> new values are logged).
+//   Requests are queued until the controller's parameter service is available.
+//
 // Parameters
 //   policies         string[]  list of policy names; each name namespaces its own params
 //   <name>.task      string    "loco" or "imitation"
@@ -150,6 +156,15 @@ private:
   void createOdomSubscription();
   void createStatisticsSubscriptions();  // kang_mjlab_node_stats.cpp
 
+  // Impedance gains (kang_mjlab_node_impedance.cpp)
+  void createImpedanceGainsInterfaces();
+  void impedanceTimerCb();
+  /// Read the current gains (for the change log), then write policy `idx`'s metadata gains.
+  void applyImpedanceGains(int idx);
+  /// Queue the gains of policy `idx` for /rl_impedance_controller. Only the latest request is
+  /// kept, so rapid switches never apply a stale policy's gains after a newer one.
+  void requestImpedanceGains(int idx) {pending_gains_idx_.store(idx);}
+
   rclcpp_action::GoalResponse handleGoal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const SwitchPolicy::Goal> goal);
@@ -194,6 +209,10 @@ private:
   rclcpp::Publisher<control_msgs::msg::MultiDOFCommand>::SharedPtr pub_sub_cmd_;
 
   rclcpp_action::Server<SwitchPolicy>::SharedPtr switch_action_server_;
+
+  rclcpp::AsyncParametersClient::SharedPtr impedance_params_client_;
+  rclcpp::TimerBase::SharedPtr impedance_timer_;
+  std::atomic<int> pending_gains_idx_{-1};  // policy whose gains still need sending, -1 = none
 };
 
 }  // namespace pal_policy_inferer
