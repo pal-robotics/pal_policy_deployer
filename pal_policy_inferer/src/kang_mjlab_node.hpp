@@ -35,6 +35,9 @@
 //   <name>.model     string    model identifier; selects models/<task>/<task>_<model>_mjlab/
 //   <name>.frames    int       (imitation only) auto-return frame budget; 0 = use ONNX default
 //   <name>.gains     string    impedance gains folder name (currently unused; reserved)
+//
+// The node is split over several translation units (kang_mjlab_node*.cpp) to keep the peak
+// compiler memory of each one below the 2 GB limit of the debian build.
 
 #ifndef KANG_MJLAB_NODE_HPP_
 #define KANG_MJLAB_NODE_HPP_
@@ -141,6 +144,10 @@ private:
   std::vector<float> buildObservationVector(PolicyInstance & p);
   void updateAllHistory(PolicyInstance & p);
   void runInference();
+
+  // Subscriptions / publisher (kang_mjlab_node_ros.cpp)
+  void createRosInterfaces();
+  void createOdomSubscription();
 
   rclcpp_action::GoalResponse handleGoal(
     const rclcpp_action::GoalUUID & uuid,

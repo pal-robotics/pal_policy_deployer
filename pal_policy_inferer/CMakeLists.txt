@@ -32,7 +32,10 @@ ament_auto_add_library(kang_mjlab_policy SHARED
 )
 target_link_libraries(kang_mjlab_policy onnxruntime::onnxruntime)
 
-ament_auto_add_executable(kang_mjlab_node src/kang_mjlab_node.cpp)
+ament_auto_add_executable(kang_mjlab_node
+  src/kang_mjlab_node.cpp
+  src/kang_mjlab_node_ros.cpp
+)
 target_link_libraries(kang_mjlab_node kang_mjlab_policy)
 target_include_directories(kang_mjlab_node PRIVATE ${EIGEN3_INCLUDE_DIRS})
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")

@@ -88,23 +88,7 @@ bool KangMjlabNode::init()
   }
 
   // Subscribers / publisher created before policy loading so topics are always visible.
-  sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
-    "/joint_states", 1,
-    std::bind(&KangMjlabNode::jsCB, this, std::placeholders::_1));
-  sub_stat_names_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsNames>(
-    "/controller_manager/introspection_data/names",
-    rclcpp::QoS(1).reliable().transient_local(),
-    std::bind(&KangMjlabNode::palStatisticsNamesCb, this, std::placeholders::_1));
-  sub_stat_values_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsValues>(
-    "/controller_manager/introspection_data/values",
-    rclcpp::QoS(1).best_effort(),
-    std::bind(&KangMjlabNode::palStatisticsValuesCb, this, std::placeholders::_1));
-  sub_cmd_vel_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    "/cmd_vel", 1,
-    std::bind(&KangMjlabNode::velCmdCB, this, std::placeholders::_1));
-
-  pub_sub_cmd_ = this->create_publisher<control_msgs::msg::MultiDOFCommand>(
-    "/subscriber_controller/desired_state", 1);
+  createRosInterfaces();
 
   switch_action_server_ = rclcpp_action::create_server<SwitchPolicy>(
     this, "~/switch_policy",
@@ -154,9 +138,7 @@ bool KangMjlabNode::init()
     }
   }
   if (need_odom) {
-    sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/odom", 1,
-      std::bind(&KangMjlabNode::odomCB, this, std::placeholders::_1));
+    createOdomSubscription();
     RCLCPP_INFO(get_logger(), "Subscribed to /odom for base_lin_vel");
   }
 
