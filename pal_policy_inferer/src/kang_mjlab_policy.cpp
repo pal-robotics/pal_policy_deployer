@@ -84,4 +84,52 @@ int getObservationTermDim(
   return -1;
 }
 
+void parsePolicyMetadata(
+  const std::map<std::string, std::string> & metadata, PolicyConfig & cfg)
+{
+  auto require = [&](const std::string & key) -> const std::string & {
+      const auto it = metadata.find(key);
+      if (it == metadata.end()) {
+        throw std::runtime_error("Missing '" + key + "'");
+      }
+      return it->second;
+    };
+  auto optional = [&](const std::string & key) {
+      const auto it = metadata.find(key);
+      return it == metadata.end() ? std::vector<double>{} : parseDoubles(it->second);
+    };
+
+  if (const auto it = metadata.find("run_path"); it != metadata.end()) {
+    cfg.run_path = it->second;
+  }
+  cfg.joint_names = splitString(require("joint_names"), ',');
+  cfg.default_joint_pos = parseDoubles(require("default_joint_pos"));
+  cfg.action_scale = parseDoubles(require("action_scale"));
+  cfg.observation_names = splitString(require("observation_names"), ',');
+  cfg.joint_stiffness = optional("joint_stiffness");
+  cfg.joint_damping = optional("joint_damping");
+
+  cfg.action_joint_names.clear();
+  cfg.action_offset.clear();
+  for (size_t i = 0; i < cfg.joint_names.size(); ++i) {
+    if (!isExcludedJoint(cfg.joint_names[i])) {
+      cfg.action_joint_names.push_back(cfg.joint_names[i]);
+      cfg.action_offset.push_back(cfg.default_joint_pos[i]);
+    }
+  }
+}
+
+bool computeHistoryLength(PolicyConfig & cfg, const MotionState & mot)
+{
+  cfg.single_obs_dim = 0;
+  for (const auto & term_name : cfg.observation_names) {
+    cfg.single_obs_dim += getObservationTermDim(cfg, mot, term_name);
+  }
+  if (cfg.single_obs_dim <= 0 || cfg.obs_dim % cfg.single_obs_dim != 0) {
+    return false;
+  }
+  cfg.history_length = cfg.obs_dim / cfg.single_obs_dim;
+  return true;
+}
+
 }  // namespace pal_policy_inferer

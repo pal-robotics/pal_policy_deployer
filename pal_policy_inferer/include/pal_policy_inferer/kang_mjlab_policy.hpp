@@ -3,6 +3,7 @@
 
 // ROS- and ONNX-free policy types and helpers used by kang_mjlab_node.
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -72,6 +73,20 @@ int indexVector(const std::vector<std::string> & container, const std::string & 
 /// @return dimension of a single (non-history) observation term, or -1 if unknown.
 int getObservationTermDim(
   const PolicyConfig & cfg, const MotionState & mot, const std::string & term_name);
+
+/// Fill cfg from ONNX custom metadata: run_path, joint_names, default_joint_pos,
+/// action_scale, observation_names, joint_stiffness, joint_damping. Also derives
+/// action_joint_names / action_offset by dropping excluded_action_joints.
+/// @throws std::runtime_error("Missing '<key>'") if a required key is absent.
+/// @throws std::invalid_argument / std::out_of_range on malformed numeric lists.
+void parsePolicyMetadata(
+  const std::map<std::string, std::string> & metadata, PolicyConfig & cfg);
+
+/// Set cfg.single_obs_dim (sum of observation term dims) and cfg.history_length
+/// (= cfg.obs_dim / single_obs_dim). For imitation, mot.num_joints must already be set.
+/// @return false if single_obs_dim is not positive or does not divide obs_dim
+///         (history_length is then left unchanged).
+bool computeHistoryLength(PolicyConfig & cfg, const MotionState & mot);
 
 }  // namespace pal_policy_inferer
 

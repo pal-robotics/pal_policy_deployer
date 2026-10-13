@@ -408,40 +408,13 @@ private:
       }
     }
 
-    if (metadata_map.find("run_path") != metadata_map.end()) {
-      config.run_path = metadata_map["run_path"];
-    }
-
-    auto require = [&](const char * key) {
-        if (metadata_map.find(key) == metadata_map.end()) {
-          RCLCPP_FATAL(get_logger(), "Missing '%s'", key);
-          return false;
-        }
-        return true;
-      };
-    if (!require("joint_names")) {return false;}
-    config.joint_names = splitString(metadata_map["joint_names"], ',');
-    if (!require("default_joint_pos")) {return false;}
-    config.default_joint_pos = parseDoubles(metadata_map["default_joint_pos"]);
-    if (!require("action_scale")) {return false;}
-    config.action_scale = parseDoubles(metadata_map["action_scale"]);
-    if (!require("observation_names")) {return false;}
-    config.observation_names = splitString(metadata_map["observation_names"], ',');
-
-    if (metadata_map.find("joint_stiffness") != metadata_map.end()) {
-      config.joint_stiffness = parseDoubles(metadata_map["joint_stiffness"]);
-    }
-    if (metadata_map.find("joint_damping") != metadata_map.end()) {
-      config.joint_damping = parseDoubles(metadata_map["joint_damping"]);
-    }
-
-    config.action_joint_names.clear();
-    config.action_offset.clear();
-    for (size_t i = 0; i < config.joint_names.size(); ++i) {
-      if (!isExcludedJoint(config.joint_names[i])) {
-        config.action_joint_names.push_back(config.joint_names[i]);
-        config.action_offset.push_back(config.default_joint_pos[i]);
-      }
+    // Only catch the "Missing key" error; malformed numbers (std::invalid_argument)
+    // propagate as before.
+    try {
+      parsePolicyMetadata(metadata_map, config);
+    } catch (const std::runtime_error & e) {
+      RCLCPP_FATAL(get_logger(), "%s", e.what());
+      return false;
     }
 
     config.num_inputs = static_cast<int>(temp_session.GetInputCount());
@@ -496,20 +469,11 @@ private:
     }
 
     // For imitation, single_obs_dim is deferred until motion.num_joints is known.
-    if (config.task != "imitation") {
-      config.single_obs_dim = 0;
-      for (const auto & term_name : config.observation_names) {
-        config.single_obs_dim += getObservationTermDim(config, motion, term_name);
-      }
-
-      if (config.single_obs_dim > 0 && config.obs_dim % config.single_obs_dim == 0) {
-        config.history_length = config.obs_dim / config.single_obs_dim;
-      } else {
-        RCLCPP_FATAL(
-          get_logger(), "Observation dimension %d not divisible by single obs dim %d",
-          config.obs_dim, config.single_obs_dim);
-        return false;
-      }
+    if (config.task != "imitation" && !computeHistoryLength(config, motion)) {
+      RCLCPP_FATAL(
+        get_logger(), "Observation dimension %d not divisible by single obs dim %d",
+        config.obs_dim, config.single_obs_dim);
+      return false;
     }
 
     if (config.action_dim != static_cast<int>(config.action_joint_names.size())) {
@@ -944,13 +908,7 @@ private:
 
     if (task == "imitation") {
       p.motion.num_joints = static_cast<int>(p.config.joint_names.size());
-      p.config.single_obs_dim = 0;
-      for (const auto & term_name : p.config.observation_names) {
-        p.config.single_obs_dim += getObservationTermDim(p.config, p.motion, term_name);
-      }
-      if (p.config.single_obs_dim > 0 && p.config.obs_dim % p.config.single_obs_dim == 0) {
-        p.config.history_length = p.config.obs_dim / p.config.single_obs_dim;
-      } else {
+      if (!computeHistoryLength(p.config, p.motion)) {
         RCLCPP_FATAL(
           get_logger(), "[Policy '%s'] Obs dim %d not divisible by single obs dim %d",
           p.name.c_str(), p.config.obs_dim, p.config.single_obs_dim);
