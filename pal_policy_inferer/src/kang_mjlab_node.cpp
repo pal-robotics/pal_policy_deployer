@@ -59,9 +59,9 @@
 #include <pal_statistics_msgs/msg/statistics_values.hpp>
 
 #include <pal_policy_inferer/action/switch_policy.hpp>
+#include "pal_policy_inferer/kang_mjlab_inference.hpp"
 #include "pal_policy_inferer/kang_mjlab_policy.hpp"
 
-#include <onnxruntime_cxx_api.h>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -69,16 +69,13 @@
 #include <algorithm>
 #include <atomic>
 #include <deque>
-#include <filesystem>
 #include <functional>
 #include <map>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
 
-namespace fs = std::filesystem;
 
 static const std::string POLICY_DEPLOYER_TOPIC = "pal_policy_deployer_statistics";
 
@@ -153,12 +150,8 @@ struct PolicyInstance
   std::map<std::string, std::shared_ptr<ObservationTerm>> obs_terms;
   std::vector<std::string> obs_term_order;
 
-  std::unique_ptr<Ort::Session> sess;
-  std::vector<const char *> in_names;
-  std::vector<const char *> out_names;
+  KangMjlabModel model;
 
-  std::vector<int64_t> input_shape;
-  std::vector<int64_t> time_step_shape;
   std::vector<double> action;
   std::vector<double> zero_action;
 };
@@ -169,9 +162,7 @@ class KangMjlabNode : public rclcpp::Node
 {
 public:
   KangMjlabNode()
-  : rclcpp::Node("pal_policy_deployer"),
-    ort_env_(ORT_LOGGING_LEVEL_WARNING, "rl"),
-    ort_mem_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault))
+  : rclcpp::Node("pal_policy_deployer")
   {
   }
 
@@ -299,22 +290,6 @@ public:
     return true;
   }
 
-  ~KangMjlabNode() override
-  {
-    // The ONNX allocator strdups the input/output names; release them.
-    Ort::AllocatorWithDefaultOptions alloc;
-    for (auto & p : policies_) {
-      for (auto * n : p.in_names) {
-        if (n) {alloc.Free(const_cast<char *>(n));}
-      }
-      for (auto * n : p.out_names) {
-        if (n) {alloc.Free(const_cast<char *>(n));}
-      }
-      p.in_names.clear();
-      p.out_names.clear();
-    }
-  }
-
 private:
   // ---- INITIALIZE MOTION FROM ROBOT STATE ----
 
@@ -385,101 +360,25 @@ private:
     return true;
   }
 
-  // ---- ONNX METADATA PARSING ----
+  // ---- ONNX MODEL LOADING ----
 
-  bool loadPolicyConfig(
-    const std::string & model_path, PolicyConfig & config, MotionState & motion)
+  bool loadPolicyConfig(const std::string & model_path, PolicyInstance & p)
   {
-    Ort::SessionOptions session_options;
-    Ort::Session temp_session(ort_env_, model_path.c_str(), session_options);
-
-    Ort::ModelMetadata metadata = temp_session.GetModelMetadata();
-    Ort::AllocatorWithDefaultOptions allocator;
-
-    std::vector<Ort::AllocatedStringPtr> keys =
-      metadata.GetCustomMetadataMapKeysAllocated(allocator);
-    std::map<std::string, std::string> metadata_map;
-    for (auto & key_ptr : keys) {
-      std::string key = key_ptr.get();
-      Ort::AllocatedStringPtr value_ptr =
-        metadata.LookupCustomMetadataMapAllocated(key.c_str(), allocator);
-      if (value_ptr) {
-        metadata_map[key] = value_ptr.get();
-      }
-    }
-
-    // Only catch the "Missing key" error; malformed numbers (std::invalid_argument)
-    // propagate as before.
+    // Only catch our own config errors (missing metadata key, obs/history mismatch);
+    // malformed numbers and Ort::Exception propagate as before.
     try {
-      parsePolicyMetadata(metadata_map, config);
+      for (const auto & line : p.model.load(model_path, p.config, p.motion)) {
+        RCLCPP_INFO(get_logger(), "  %s", line.c_str());
+      }
     } catch (const std::runtime_error & e) {
       RCLCPP_FATAL(get_logger(), "%s", e.what());
       return false;
     }
 
-    config.num_inputs = static_cast<int>(temp_session.GetInputCount());
-    config.num_outputs = static_cast<int>(temp_session.GetOutputCount());
-
-    {
-      Ort::TypeInfo info = temp_session.GetInputTypeInfo(0);
-      auto tensor_info = info.GetTensorTypeAndShapeInfo();
-      config.obs_dim = static_cast<int>(tensor_info.GetShape()[1]);
-    }
-
-    for (int i = 0; i < config.num_outputs; ++i) {
-      Ort::AllocatedStringPtr name = temp_session.GetOutputNameAllocated(i, allocator);
-      std::string n = name.get();
-
-      Ort::TypeInfo info = temp_session.GetOutputTypeInfo(i);
-      auto tensor_info = info.GetTensorTypeAndShapeInfo();
-      auto dims = tensor_info.GetShape();
-
-      std::stringstream shape_ss;
-      for (size_t j = 0; j < dims.size(); j++) {
-        if (j > 0) {shape_ss << ",";}
-        shape_ss << dims[j];
-      }
-      RCLCPP_INFO(
-        get_logger(), "  Output %d: '%s' [%s]",
-        i, n.c_str(), shape_ss.str().c_str());
-
-      if (n == "actions") {
-        config.out_idx_actions = i;
-        config.action_dim = static_cast<int>(dims[1]);
-      } else if (n == "joint_pos") {
-        config.out_idx_joint_pos = i;
-      } else if (n == "joint_vel") {
-        config.out_idx_joint_vel = i;
-      }
-    }
-
-    for (int i = 0; i < config.num_inputs; ++i) {
-      Ort::AllocatedStringPtr name = temp_session.GetInputNameAllocated(i, allocator);
-      Ort::TypeInfo info = temp_session.GetInputTypeInfo(i);
-      auto tensor_info = info.GetTensorTypeAndShapeInfo();
-      auto dims = tensor_info.GetShape();
-      std::stringstream shape_ss;
-      for (size_t j = 0; j < dims.size(); j++) {
-        if (j > 0) {shape_ss << ",";}
-        shape_ss << dims[j];
-      }
-      RCLCPP_INFO(
-        get_logger(), "  Input %d: '%s' [%s]",
-        i, name.get(), shape_ss.str().c_str());
-    }
-
-    // For imitation, single_obs_dim is deferred until motion.num_joints is known.
-    if (config.task != "imitation" && !computeHistoryLength(config, motion)) {
-      RCLCPP_FATAL(
-        get_logger(), "Observation dimension %d not divisible by single obs dim %d",
-        config.obs_dim, config.single_obs_dim);
-      return false;
-    }
-
-    if (config.action_dim != static_cast<int>(config.action_joint_names.size())) {
+    if (p.config.action_dim != static_cast<int>(p.config.action_joint_names.size())) {
       RCLCPP_WARN(
         get_logger(), "Action dim mismatch: ONNX=%d, expected=%zu",
-        config.action_dim, config.action_joint_names.size());
+        p.config.action_dim, p.config.action_joint_names.size());
     }
 
     return true;
@@ -559,27 +458,10 @@ private:
     }
     PUBLISH_STATISTICS(this, POLICY_DEPLOYER_TOPIC);
 
-    std::vector<Ort::Value> input_tensors;
+    const auto outputs = p.model.run(
+      obs_input, time_step_val, p.config.num_inputs > 1 && p.config.task == "imitation");
 
-    Ort::Value obs_tensor = Ort::Value::CreateTensor<float>(
-      ort_mem_, obs_input.data(), obs_input.size(),
-      p.input_shape.data(), p.input_shape.size());
-    input_tensors.push_back(std::move(obs_tensor));
-
-    if (p.config.num_inputs > 1 && p.config.task == "imitation") {
-      Ort::Value ts_tensor = Ort::Value::CreateTensor<float>(
-        ort_mem_, &time_step_val, 1,
-        p.time_step_shape.data(), p.time_step_shape.size());
-      input_tensors.push_back(std::move(ts_tensor));
-    }
-
-    auto outputs = p.sess->Run(
-      Ort::RunOptions{nullptr},
-      p.in_names.data(), input_tensors.data(),
-      input_tensors.size(),
-      p.out_names.data(), p.out_names.size());
-
-    const float * actions_data = outputs[p.config.out_idx_actions].GetTensorData<float>();
+    const float * actions_data = outputs.actions;
     for (int i = 0; i < p.config.action_dim; ++i) {
       p.action[i] = p.config.action_scale[i] * actions_data[i] + p.config.action_offset[i];
     }
@@ -593,10 +475,9 @@ private:
     }
 
     if (p.config.task == "imitation" && p.motion.loaded) {
-      if (p.config.out_idx_joint_pos >= 0 && p.config.out_idx_joint_vel >= 0) {
-        const float * out_jp = outputs[p.config.out_idx_joint_pos].GetTensorData<float>();
-        const float * out_jv = outputs[p.config.out_idx_joint_vel].GetTensorData<float>();
-        p.motion.updateFromOutputs(out_jp, p.motion.num_joints, out_jv, p.motion.num_joints);
+      if (outputs.joint_pos && outputs.joint_vel) {
+        p.motion.updateFromOutputs(
+          outputs.joint_pos, p.motion.num_joints, outputs.joint_vel, p.motion.num_joints);
       }
       p.motion.timestep++;
       if (p.motion.frames > 0 && p.motion.timestep >= p.motion.frames) {
@@ -874,32 +755,17 @@ private:
       p.name.c_str(), config_dir.c_str());
 
     std::string model_path;
-    bool found = false;
-    if (!fs::is_directory(config_dir)) {
-      RCLCPP_FATAL(
-        get_logger(), "[Policy '%s'] Model directory does not exist: %s",
-        p.name.c_str(), config_dir.c_str());
+    try {
+      model_path = KangMjlabModel::findOnnxModel(config_dir);
+    } catch (const std::runtime_error & e) {
+      RCLCPP_FATAL(get_logger(), "[Policy '%s'] %s", p.name.c_str(), e.what());
       return false;
     }
-    for (auto & entry : fs::directory_iterator(config_dir)) {
-      fs::path fp = entry.path();
-      if (fs::is_regular_file(fp) && fp.extension() == ".onnx") {
-        model_path = fp.string();
-        found = true;
-        RCLCPP_INFO(
-          get_logger(), "[Policy '%s'] Found ONNX model: %s",
-          p.name.c_str(), model_path.c_str());
-        break;
-      }
-    }
-    if (!found) {
-      RCLCPP_FATAL(
-        get_logger(), "[Policy '%s'] No ONNX model found in %s",
-        p.name.c_str(), config_dir.c_str());
-      return false;
-    }
+    RCLCPP_INFO(
+      get_logger(), "[Policy '%s'] Found ONNX model: %s",
+      p.name.c_str(), model_path.c_str());
 
-    if (!loadPolicyConfig(model_path, p.config, p.motion)) {
+    if (!loadPolicyConfig(model_path, p)) {
       RCLCPP_FATAL(
         get_logger(),
         "[Policy '%s'] Failed to load policy configuration from ONNX metadata", p.name.c_str());
@@ -947,26 +813,11 @@ private:
 
     p.action.resize(p.config.action_dim, 0.0);
     p.zero_action.resize(p.config.action_dim, 0.0);
-    p.input_shape = {1, static_cast<int64_t>(p.config.obs_dim)};
-    p.time_step_shape = {1, 1};
-
-    p.sess.reset(new Ort::Session(ort_env_, model_path.c_str(), Ort::SessionOptions{}));
-
-    Ort::AllocatorWithDefaultOptions alloc;
-    for (size_t i = 0; i < p.sess->GetInputCount(); ++i) {
-      p.in_names.push_back(p.sess->GetInputNameAllocated(i, alloc).release());
-    }
-    for (size_t i = 0; i < p.sess->GetOutputCount(); ++i) {
-      p.out_names.push_back(p.sess->GetOutputNameAllocated(i, alloc).release());
-    }
 
     return true;
   }
 
   // ---- MEMBERS ----
-
-  Ort::Env ort_env_;
-  Ort::MemoryInfo ort_mem_;
 
   std::vector<PolicyInstance> policies_;
   std::atomic<int> active_policy_idx_{0};
