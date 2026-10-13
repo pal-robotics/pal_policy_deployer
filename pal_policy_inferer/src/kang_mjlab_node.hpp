@@ -148,6 +148,7 @@ private:
   // Subscriptions / publisher (kang_mjlab_node_ros.cpp)
   void createRosInterfaces();
   void createOdomSubscription();
+  void createStatisticsSubscriptions();  // kang_mjlab_node_stats.cpp
 
   rclcpp_action::GoalResponse handleGoal(
     const rclcpp_action::GoalUUID & uuid,

@@ -89,6 +89,7 @@ bool KangMjlabNode::init()
 
   // Subscribers / publisher created before policy loading so topics are always visible.
   createRosInterfaces();
+  createStatisticsSubscriptions();
 
   switch_action_server_ = rclcpp_action::create_server<SwitchPolicy>(
     this, "~/switch_policy",

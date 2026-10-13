@@ -13,14 +13,6 @@ void KangMjlabNode::createRosInterfaces()
   sub_js_ = this->create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", 1,
     std::bind(&KangMjlabNode::jsCB, this, std::placeholders::_1));
-  sub_stat_names_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsNames>(
-    "/controller_manager/introspection_data/names",
-    rclcpp::QoS(1).reliable().transient_local(),
-    std::bind(&KangMjlabNode::palStatisticsNamesCb, this, std::placeholders::_1));
-  sub_stat_values_ = this->create_subscription<pal_statistics_msgs::msg::StatisticsValues>(
-    "/controller_manager/introspection_data/values",
-    rclcpp::QoS(1).best_effort(),
-    std::bind(&KangMjlabNode::palStatisticsValuesCb, this, std::placeholders::_1));
   sub_cmd_vel_ = this->create_subscription<geometry_msgs::msg::Twist>(
     "/cmd_vel", 1,
     std::bind(&KangMjlabNode::velCmdCB, this, std::placeholders::_1));
