@@ -31,9 +31,6 @@ ament_auto_add_library(kang_mjlab_policy SHARED
   src/kang_mjlab_inference.cpp
 )
 target_link_libraries(kang_mjlab_policy onnxruntime::onnxruntime)
-set_target_properties(kang_mjlab_policy PROPERTIES
-  INSTALL_RPATH "\$ORIGIN/../lib;\$ORIGIN/../opt/onnxruntime_vendor/lib;${CMAKE_INSTALL_PREFIX}/lib"
-)
 
 ament_auto_add_executable(kang_mjlab_node src/kang_mjlab_node.cpp)
 target_link_libraries(kang_mjlab_node kang_mjlab_policy)
