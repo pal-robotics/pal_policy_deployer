@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -38,6 +39,21 @@ inline std::vector<rclcpp::Parameter> buildImpedanceGainParameters(
     params.emplace_back("gains." + joint_names[i] + ".d", damping[i]);
   }
   return params;
+}
+
+/// Whether writing `new_value` changes the controller gain currently set to `old_value`.
+///
+/// Values are compared exactly: both come from the same metadata doubles, so an unchanged gain
+/// round-trips bit-identical.
+///
+/// @param old_value  value read back from the controller; PARAMETER_NOT_SET (or any non-double)
+///                   if the controller did not report it
+/// @param new_value  double gain about to be written
+/// @return true if the gain differs, or if the old value is unknown
+inline bool gainChanged(const rclcpp::Parameter & old_value, const rclcpp::Parameter & new_value)
+{
+  return old_value.get_type() != rclcpp::ParameterType::PARAMETER_DOUBLE ||
+         std::islessgreater(old_value.as_double(), new_value.as_double());
 }
 
 }  // namespace pal_policy_inferer

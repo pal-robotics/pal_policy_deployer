@@ -62,27 +62,33 @@ void KangMjlabNode::applyImpedanceGains(int idx)
         [this, params, old_params, policy_name](
           std::shared_future<std::vector<rcl_interfaces::msg::SetParametersResult>> future) {
           const auto results = future.get();
-          RCLCPP_INFO(
-            get_logger(), "[Policy '%s'] Impedance gains of %s:",
-            policy_name.c_str(), IMPEDANCE_CONTROLLER_NODE.c_str());
+          size_t changed = 0, failed = 0;
           for (size_t i = 0; i < params.size(); ++i) {
+            const bool known_old = i < old_params.size();
             // Unknown parameters come back as PARAMETER_NOT_SET instead of a double.
             const std::string old_value =
-              (i < old_params.size() &&
+              (known_old &&
               old_params[i].get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE) ?
               std::to_string(old_params[i].as_double()) : "?";
             if (i < results.size() && results[i].successful) {
+              // Only log gains that actually change; the summary below covers the rest.
+              if (known_old && !gainChanged(old_params[i], params[i])) {continue;}
+              ++changed;
               RCLCPP_INFO(
-                get_logger(), "  %s: %s -> %f",
-                params[i].get_name().c_str(), old_value.c_str(), params[i].as_double());
+                get_logger(), "[Policy '%s'] %s: %s -> %f",
+                policy_name.c_str(), params[i].get_name().c_str(), old_value.c_str(), params[i].as_double());
             } else {
+              ++failed;
               RCLCPP_ERROR(
-                get_logger(), "  %s: FAILED to set %f (still %s): %s",
-                params[i].get_name().c_str(), params[i].as_double(), old_value.c_str(),
+                get_logger(), "[Policy '%s'] %s: FAILED to set %f (still %s): %s",
+                policy_name.c_str(), params[i].get_name().c_str(), params[i].as_double(), old_value.c_str(),
                 i < results.size() ? results[i].reason.c_str() : "no response");
             }
           }
-          RCLCPP_INFO(get_logger(), "Successfully tried setting the gains of the impedance from the policy metadata");
+          RCLCPP_INFO(
+            get_logger(), "[Policy '%s'] Impedance gains of %s: %zu changed, %zu unchanged, %zu failed",
+            policy_name.c_str(), IMPEDANCE_CONTROLLER_NODE.c_str(), changed,
+            params.size() - changed - failed, failed);
         });
     });
 }

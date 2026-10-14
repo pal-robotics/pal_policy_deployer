@@ -36,3 +36,14 @@ TEST(ImpedanceGains, ThrowsWhenMetadataMissing)
 {
   EXPECT_THROW(buildImpedanceGainParameters({"a_joint"}, {}, {}), std::invalid_argument);
 }
+
+TEST(ImpedanceGains, GainChangedOnlyWhenValueDiffersOrUnknown)
+{
+  using pal_policy_inferer::gainChanged;
+  const rclcpp::Parameter new_p("gains.a_joint.p", 100.0);
+
+  EXPECT_FALSE(gainChanged(rclcpp::Parameter("gains.a_joint.p", 100.0), new_p));
+  EXPECT_TRUE(gainChanged(rclcpp::Parameter("gains.a_joint.p", 50.0), new_p));
+  // Unknown parameters come back as PARAMETER_NOT_SET: the old value is unknown, so log it.
+  EXPECT_TRUE(gainChanged(rclcpp::Parameter("gains.a_joint.p"), new_p));
+}
