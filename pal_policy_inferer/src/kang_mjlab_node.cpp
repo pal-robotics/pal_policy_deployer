@@ -143,6 +143,9 @@ bool KangMjlabNode::init()
     RCLCPP_INFO(get_logger(), "Subscribed to /odom for base_lin_vel");
   }
 
+  createImpedanceGainsInterfaces();
+  requestImpedanceGains(0);
+
   RCLCPP_INFO(
     get_logger(), "Policy deployer started. Active policy: [0] '%s'",
     policies_[0].name.c_str());
@@ -350,7 +353,7 @@ void KangMjlabNode::runInference()
       p.motion.loaded = false;
       p.motion.timestep = 0;
       active_policy_idx_.store(0);
-      // TODO impedance: reapply gains on auto-switch-back to policy [0].
+      requestImpedanceGains(0);
     }
   }
 
@@ -422,7 +425,7 @@ void KangMjlabNode::executeSwitch(const std::shared_ptr<SwitchPolicyGoalHandle> 
     old_idx, policies_[old_idx].name.c_str(),
     new_idx, policies_[new_idx].name.c_str());
 
-  // TODO impedance: reapply gains for the newly active policy.
+  requestImpedanceGains(new_idx);
 
   result->success = true;
   result->message = "Switched to policy [" + std::to_string(new_idx) + "] '" +

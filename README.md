@@ -70,6 +70,16 @@ Implement the required child classes for the policy. Existing implementations ca
 
 After building and sourcing the workspace, launch the policy, for example: ```ros2 launch pal_policy_deployer reaching_tiago_deployer.launch.py```
 
+### Kangaroo (mjlab) impedance gains
+
+`kang_mjlab_node` writes the active policy's ONNX metadata `joint_stiffness` / `joint_damping`
+(ordered like the action joints) to `/rl_impedance_controller` as `gains.<joint>.p` /
+`gains.<joint>.d`. This happens at startup, on every `~/switch_policy` request, and when an
+imitation policy auto-switches back to policy `[0]`. If the controller is not up yet, the request
+is retried every 0.5 s and only the latest policy's gains are sent. Only gains whose value
+actually changes are logged, as `gains.<joint>.p: <old> -> <new>`, followed by a
+`<n> changed, <n> unchanged, <n> failed` summary. If the metadata has no gains, or the wrong number of them, an
+error is logged and the controller gains are left as they are.
 
 ### TO DO
 - Add locomotion (Kangaroo) policies
