@@ -26,7 +26,6 @@
   <depend>eigen</depend>
   <depend>pal_statistics</depend>
   <depend>pal_statistics_msgs</depend>
-  <depend>ament_index_cpp</depend>
   <depend>action_msgs</depend>
   <depend>onnxruntime_vendor</depend>
 

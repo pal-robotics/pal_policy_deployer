@@ -1,14 +1,5 @@
 #include "kang_mjlab_node.hpp"
 
-#include <ament_index_cpp/version.h>
-// get_package_share_directory() was replaced by get_package_share_path() in
-// ament_index_cpp >= 1.13.2 (https://github.com/ament/ament_index/pull/120).
-#if AMENT_INDEX_CPP_VERSION_GTE(1, 13, 2)
-#include <ament_index_cpp/get_package_share_path.hpp>
-#else
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#endif
-
 #include <pal_statistics/pal_statistics_macros.hpp>
 
 #include <algorithm>
@@ -51,7 +42,7 @@ bool KangMjlabNode::init()
 {
   struct PolicySpec
   {
-    std::string task, model, name, gains;
+    std::string task, model_path, name, gains;
     int frames = 0;
   };
   std::vector<PolicySpec> specs;
@@ -67,20 +58,20 @@ bool KangMjlabNode::init()
 
   for (const auto & name : names) {
     this->declare_parameter<std::string>(name + ".task", "");
-    this->declare_parameter<std::string>(name + ".model", "");
+    this->declare_parameter<std::string>(name + ".model_path", "");
     this->declare_parameter<int>(name + ".frames", 0);
     this->declare_parameter<std::string>(name + ".gains", "impedance_control");
 
     PolicySpec s;
     s.name = name;
     s.task = this->get_parameter(name + ".task").as_string();
-    s.model = this->get_parameter(name + ".model").as_string();
+    s.model_path = this->get_parameter(name + ".model_path").as_string();
     s.frames = static_cast<int>(this->get_parameter(name + ".frames").as_int());
     s.gains = this->get_parameter(name + ".gains").as_string();
-    if (s.task.empty() || s.model.empty()) {
+    if (s.task.empty() || s.model_path.empty()) {
       RCLCPP_FATAL(
         get_logger(),
-        "Policy '%s' is missing required parameter '%s.task' or '%s.model'.",
+        "Policy '%s' is missing required parameter '%s.task' or '%s.model_path'.",
         name.c_str(), name.c_str(), name.c_str());
       return false;
     }
@@ -109,7 +100,7 @@ bool KangMjlabNode::init()
   for (size_t i = 0; i < specs.size(); ++i) {
     policies_[i].index = static_cast<int>(i);
     policies_[i].name = specs[i].name;
-    if (!loadPolicy(policies_[i], specs[i].task, specs[i].model)) {
+    if (!loadPolicy(policies_[i], specs[i].task, specs[i].model_path)) {
       RCLCPP_FATAL(
         get_logger(), "Failed to load policy [%zu] '%s'",
         i, specs[i].name.c_str());
@@ -604,27 +595,17 @@ void KangMjlabNode::palStatisticsValuesCb(
 // ---- LOAD A SINGLE POLICY INSTANCE ----
 
 bool KangMjlabNode::loadPolicy(
-  PolicyInstance & p, const std::string & task, const std::string & model_name)
+  PolicyInstance & p, const std::string & task, const std::string & model_dir)
 {
   p.config.task = task;
 
-#if AMENT_INDEX_CPP_VERSION_GTE(1, 13, 2)
-  const std::string pkg_root =
-    ament_index_cpp::get_package_share_path("pal_policy_deployer").string();
-#else
-  const std::string pkg_root =
-    ament_index_cpp::get_package_share_directory("pal_policy_deployer");
-#endif
-  const std::string config_dir = pkg_root + "/models/" + task + "/" + task + "_" + model_name +
-    "_mjlab/";
-
   RCLCPP_INFO(
     get_logger(), "[Policy '%s'] Looking for ONNX model in: %s",
-    p.name.c_str(), config_dir.c_str());
+    p.name.c_str(), model_dir.c_str());
 
   std::string model_path;
   try {
-    model_path = KangMjlabModel::findOnnxModel(config_dir);
+    model_path = KangMjlabModel::findOnnxModel(model_dir);
   } catch (const std::runtime_error & e) {
     RCLCPP_FATAL(get_logger(), "[Policy '%s'] %s", p.name.c_str(), e.what());
     return false;

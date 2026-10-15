@@ -38,7 +38,8 @@
 // Parameters
 //   policies         string[]  list of policy names; each name namespaces its own params
 //   <name>.task      string    "loco" or "imitation"
-//   <name>.model     string    model identifier; selects models/<task>/<task>_<model>_mjlab/
+//   <name>.model_path string   directory containing the policy's .onnx file (the launch files
+//                              resolve it to <share>/models/<robot_type>/<task>/<task>_<model>_mjlab/)
 //   <name>.frames    int       (imitation only) auto-return frame budget; 0 = use ONNX default
 //   <name>.gains     string    impedance gains folder name (currently unused; reserved)
 //
@@ -179,7 +180,9 @@ private:
   void palStatisticsNamesCb(const pal_statistics_msgs::msg::StatisticsNames::ConstSharedPtr msg);
   void palStatisticsValuesCb(const pal_statistics_msgs::msg::StatisticsValues::ConstSharedPtr msg);
 
-  bool loadPolicy(PolicyInstance & p, const std::string & task, const std::string & model_name);
+  /// Load the first .onnx found in model_dir into p and configure it for task.
+  /// @return false (after logging) if no model is found or its metadata is invalid.
+  bool loadPolicy(PolicyInstance & p, const std::string & task, const std::string & model_dir);
 
   // ---- MEMBERS ----
 
