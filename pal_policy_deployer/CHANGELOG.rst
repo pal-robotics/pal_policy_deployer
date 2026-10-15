@@ -2,8 +2,8 @@
 Changelog for package pal_policy_deployer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.1 (2026-10-15)
+------------------
 * Merge branch 'fix/model_paths' into 'humble-devel'
   Fix the model paths issue when launching policies
   See merge request control/pal_policy_deployer!35
