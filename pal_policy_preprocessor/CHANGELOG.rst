@@ -2,8 +2,8 @@
 Changelog for package pal_policy_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.0 (2026-10-15)
+------------------
 * Use tf2 Quaternion hpp header
 * Contributors: Sai Kishor Kothakota
 

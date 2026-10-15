@@ -2,8 +2,8 @@
 Changelog for package pal_policy_deployer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.0 (2026-10-15)
+------------------
 * Merge branch 'reorder/models' into 'humble-devel'
   Reorder policies into their respective robot type
   See merge request control/pal_policy_deployer!31
