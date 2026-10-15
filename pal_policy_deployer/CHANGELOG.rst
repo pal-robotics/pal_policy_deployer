@@ -2,6 +2,34 @@
 Changelog for package pal_policy_deployer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'reorder/models' into 'humble-devel'
+  Reorder policies into their respective robot type
+  See merge request control/pal_policy_deployer!31
+* Add 7DoF configuration
+* Use the respective paths in the launch system
+* Move the imitation policies into their respective models
+* move the full body 4dof locomotion policies into its own folder
+* move the lower body locomotion policies into its own folder
+* Merge branch 'auto/gain_switching' into 'humble-devel'
+  Online gain switching on policy switching
+  See merge request control/pal_policy_deployer!33
+* Update jump com air time imitation ONNX model joint stiffness gain of leg length to 1200
+* Merge branch 'eurobin/parlament' into 'humble-devel'
+  Add changes corresponding 4DoF variant
+  See merge request control/pal_policy_deployer!29
+* Add top level launch file that can launch different behaviours
+* Add launch file specific to the lower body
+* Add configuration for 4DoF configuration
+* fallback to the lower body defaults
+* Add v700 rough terrain policy for demonstration
+* Update the defaults to policies for 4DoF
+* Add activate_impedance_controller option
+* Add policies of jumping v30
+* Add pal_policy_deployer module
+* Contributors: Sai Kishor Kothakota
+
 1.2.2 (2026-08-21)
 ------------------
 

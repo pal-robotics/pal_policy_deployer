@@ -2,6 +2,29 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'auto/gain_switching' into 'humble-devel'
+  Online gain switching on policy switching
+  See merge request control/pal_policy_deployer!33
+* Log only the changed gains
+* Push policy impedance gains to rl_impedance_controller on policy switch
+* Add impedance gains helper with unit tests
+* Merge branch 'refactor/debian-job-constraints' into 'humble-devel'
+  Refactor pal_policy_inferer based on the debian job constraints
+  See merge request control/pal_policy_deployer!34
+* Separate the statistics ROS subscribers
+* Separate the ros interface creation
+* Create kang_mjlab_node.hpp and separate the declarations
+* Revert hardcoded cmakelists flags
+* Remove the unnecessary target properties
+* Try cmakelists flags
+* Move ONNX inference of kang_mjlab_node into the policy library
+* move more methods into the library
+* Add minimal tests for the library
+* Separate structs and classes into a library headers
+* Contributors: Sai Kishor Kothakota
+
 1.2.2 (2026-08-21)
 ------------------
 * Merge branch 'fix/ament_index/deprecations' into 'humble-devel'
