@@ -83,7 +83,7 @@ def resolve_policy_model(pkg_share_folder: str, task: str, model: str) -> str:
 
     Mirrors how kang_mjlab_node locates models at runtime (see
     kang_mjlab_node.cpp::loadPolicy): the model lives in
-    ``<share>/models/<task>/<task>_<model>_mjlab/`` and that directory must
+    ``<share>/models/lower_body/<task>/<task>_<model>_mjlab/`` and that directory must
     contain at least one ``.onnx`` file.
 
     :param pkg_share_folder: share directory of the pal_policy_deployer package.
@@ -92,7 +92,7 @@ def resolve_policy_model(pkg_share_folder: str, task: str, model: str) -> str:
     :returns: absolute path to the validated model directory.
     :raises FileNotFoundError: if the directory is missing or has no ``.onnx`` file.
     """
-    model_dir = os.path.join(pkg_share_folder, "models", task, f"{task}_{model}_mjlab")
+    model_dir = os.path.join(pkg_share_folder, "models", "lower_body", task, f"{task}_{model}_mjlab")
     if not os.path.isdir(model_dir):
         raise FileNotFoundError(
             f"[pal_policy_deployer] Policy model directory not found: '{model_dir}'. "
