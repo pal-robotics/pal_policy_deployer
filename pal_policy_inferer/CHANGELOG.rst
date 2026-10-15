@@ -2,6 +2,14 @@
 Changelog for package pal_policy_inferer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'fix/model_paths' into 'humble-devel'
+  Fix the model paths issue when launching policies
+  See merge request control/pal_policy_deployer!35
+* Fix the model paths issue when launching policies
+* Contributors: Sai Kishor Kothakota
+
 1.3.0 (2026-10-15)
 ------------------
 * Merge branch 'auto/gain_switching' into 'humble-devel'
