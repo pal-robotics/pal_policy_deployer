@@ -53,7 +53,7 @@ if(BUILD_TESTING)
   # The shipped models live in the sibling pal_policy_deployer package; only available when
   # building from the full source tree (not in a standalone debian build).
   set(_kang_test_model_dir
-    "${CMAKE_CURRENT_SOURCE_DIR}/../pal_policy_deployer/models/imitation/imitation_v472_mjlab")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../pal_policy_deployer/models/lower_body/imitation/imitation_v472_mjlab")
   if(EXISTS "${_kang_test_model_dir}")
     target_compile_definitions(test_kang_mjlab_inference PRIVATE
       KANG_TEST_IMITATION_MODEL_DIR="${_kang_test_model_dir}")

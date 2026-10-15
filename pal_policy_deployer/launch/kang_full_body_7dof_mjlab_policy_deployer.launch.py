@@ -79,8 +79,8 @@ class LaunchArguments(LaunchArgumentsBase):
 def resolve_policy_model(pkg_share_folder: str, task: str, model: str) -> str:
     """Validate that the policy model exists and return its directory.
 
-    Mirrors how kang_mjlab_node locates models at runtime (see
-    kang_mjlab_node.cpp::loadPolicy): the model lives in
+    The returned directory is passed to kang_mjlab_node as ``<policy>.model_path``.
+    The model lives in
     ``<share>/models/full_body_7dof/<task>/<task>_<model>_mjlab/`` and that directory must
     contain at least one ``.onnx`` file.
 
@@ -127,8 +127,8 @@ def _check_model_and_create_actions(context, *args, **kwargs):
     activate_impedance_controller = LaunchConfiguration("activate_impedance_controller").perform(context)
 
     # Fail fast (non-zero exit) before launching anything if either model is absent.
-    resolve_policy_model(pkg_share_folder, task, model)
-    resolve_policy_model(pkg_share_folder, imitation_task, imitation_model)
+    model_dir = resolve_policy_model(pkg_share_folder, task, model)
+    imitation_model_dir = resolve_policy_model(pkg_share_folder, imitation_task, imitation_model)
 
     # The first policy in the list is the default-active one at startup; the node
     # switches to index 1 (the imitation policy) when it receives a SwitchPolicy goal.
@@ -141,9 +141,9 @@ def _check_model_and_create_actions(context, *args, **kwargs):
             "use_sim_time": LaunchConfiguration("use_sim_time"),
             "policies": ["loco", "imitation"],
             "loco.task": task,
-            "loco.model": model,
+            "loco.model_path": model_dir,
             "imitation.task": imitation_task,
-            "imitation.model": imitation_model,
+            "imitation.model_path": imitation_model_dir,
             "imitation.frames": int(imitation_frames),
         }],
         remappings=[

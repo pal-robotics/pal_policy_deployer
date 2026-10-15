@@ -42,6 +42,8 @@ _(Note: currently only the reaching policy for TIAGo Pro, trained using reinforc
 
 Place the model (e.g. ONNX file) you want to deploy in ```pal_policy_deployer/models/``` and define the model path in the corresponding launch file.
 
+For the Kang mjlab launch files, models live in ```models/<robot_type>/<task>/<task>_<model>_mjlab/```. The launch file resolves this directory from its ```task```/```model``` arguments and passes it to ```kang_mjlab_node``` as ```<policy>.model_path``` (e.g. ```loco.model_path```). The node loads the first ```.onnx``` file in that directory.
+
 2. **Define model metadata**
 
 To enhance reusability and avoid hardcoding policy-specific values in the launch
