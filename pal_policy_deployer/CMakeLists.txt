@@ -12,6 +12,20 @@ elseif(DEFINED ENV{PAL_DISTRO})
   message(FATAL_ERROR "The pal_module_cmake package was not found. Modules not registered.")
 endif()
 
+include(cmake/fetch_models.cmake)
+include(cmake/models_manifest.cmake)
+# Models fetched from the registry land here; merged with the source models/ tree on install.
+file(MAKE_DIRECTORY ${PAL_MODELS_BINARY_DIR})
+install(DIRECTORY ${PAL_MODELS_BINARY_DIR}/ DESTINATION share/${PROJECT_NAME}/models)
+
+if(BUILD_TESTING)
+  add_test(NAME test_fetch_models
+    COMMAND ${CMAKE_COMMAND}
+      -DHELPER=${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch_models.cmake
+      -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_fetch_models
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/test/test_fetch_models.cmake)
+endif()
+
 if(ament_cmake_auto_VERSION VERSION_LESS "2.6.0")
   ament_auto_package(USE_SCOPED_HEADER_INSTALL_DIR INSTALL_TO_SHARE config models launch)
 else()
