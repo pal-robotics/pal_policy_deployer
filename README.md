@@ -83,6 +83,92 @@ actually changes are logged, as `gains.<joint>.p: <old> -> <new>`, followed by a
 `<n> changed, <n> unchanged, <n> failed` summary. If the metadata has no gains, or the wrong number of them, an
 error is logged and the controller gains are left as they are.
 
+### Model registry
+
+The shipped policies can be hosted in the [GitLab Model Registry](https://docs.gitlab.com/user/project/ml/model_registry/)
+of [control/pal_policy_deployer](https://gitlab.pal-robotics.com/control/pal_policy_deployer/-/ml/models)
+instead of git. At CMake configure time, every file listed in
+`pal_policy_deployer/cmake/models_manifest.cmake` is made available under
+`share/pal_policy_deployer/models/<relpath>`:
+
+- if `pal_policy_deployer/models/<relpath>` exists locally, it is used and **nothing is downloaded**;
+- otherwise it is downloaded from the registry into the build directory, checked against its SHA256, and installed.
+  A verified copy is kept, so re-configuring does not download it again.
+
+The install layout is the same either way, so the launch files do not change.
+
+#### One-time project setup
+
+In **Settings > General > Visibility, project features, permissions**, enable **Model registry** and **Package registry**.
+
+#### Staging and stable models
+
+Models are organised by stage, one registry model per robot type and task:
+
+```text
+staging/lower_body_loco   315.0.0, 412.0.0, ...   candidates under test, delete freely
+stable/lower_body_loco    315.0.0, ...            shipped policies, the only ones in the manifest
+```
+
+- The model name is `<stage>/<body>_<task>`. The registry is a flat list of models, so the `/` is part of the name;
+  searching for `staging/` in **Deploy > Model registry** lists every staging model.
+- The version is the model directory's number as SemVer (`loco_v315_mjlab` → `315.0.0`). GitLab only accepts SemVer,
+  so `v315` itself cannot be a version.
+- Files are stored flat in a version, under their file name. The manifest maps them back to their path under `models/`.
+
+The commands below use these variables (`GITLAB_TOKEN` needs the `api` scope to push):
+```bash
+API=https://gitlab.pal-robotics.com/api/v4/projects/control%2Fpal_policy_deployer
+MLFLOW=$API/ml/mlflow/api/2.0/mlflow
+AUTH="Authorization: Bearer $GITLAB_TOKEN"   # the registry endpoints reject PRIVATE-TOKEN
+```
+
+**1. Push a candidate to staging.** Either use the UI (**Deploy > Model registry > Create model**, **Create new
+version**, upload files on the **Artifacts** tab) or:
+```bash
+NAME=staging/lower_body_loco; VERSION=315.0.0; DIR=pal_policy_deployer/models/lower_body/loco/loco_v315_mjlab
+curl -sS -H "$AUTH" -H "Content-Type: application/json" -X POST $MLFLOW/registered-models/create \
+  -d "{\"name\":\"$NAME\"}"     # only the first time; errors if the model exists
+curl -sS -H "$AUTH" -H "Content-Type: application/json" -X POST $MLFLOW/model-versions/create \
+  -d "{\"name\":\"$NAME\",\"source\":\"pal_policy_deployer\",\"tags\":[{\"key\":\"gitlab.version\",\"value\":\"$VERSION\"}]}"
+# The response's "source" is .../-/ml/models/<model_id>/versions/<version_id>
+VERSION_ID=<version_id>
+for f in $DIR/*; do
+  curl -sS --fail -H "$AUTH" --upload-file "$f" "$API/packages/ml_models/$VERSION_ID/files/$(basename "$f")"
+done
+```
+To test a staging model, put its files in `pal_policy_deployer/models/<relpath>` (download them from the UI, or with
+`curl -H "$AUTH" -o <file> $API/packages/ml_models/<version_id>/files/<file>`) and build. A local file always wins.
+
+**2. Promote to stable.** Repeat step 1 with `NAME=stable/lower_body_loco`, the same version and the same files.
+This gives a new `<version_id>`. Then add the files to the manifest, from the repository root:
+```bash
+VERSION_ID=<stable version_id>
+DIR=lower_body/loco/loco_v315_mjlab
+(cd pal_policy_deployer/models && sha256sum $DIR/* | \
+  awk -v v=$VERSION_ID '{print "pal_policy_model_file(" v " " $2 " " $1 ")"}') \
+  >> pal_policy_deployer/cmake/models_manifest.cmake
+```
+Commit the manifest. Committing the model files to git is optional. Only `stable/` version ids belong in the manifest.
+
+**3. Clean up.** Delete `staging/` models or versions from **Deploy > Model registry** whenever you like: builds
+never use them. Delete a `stable/` version only after removing its lines from the manifest.
+
+#### Building
+
+Fetching needs `GITLAB_TOKEN`: a personal, project or group access token with the `read_api` scope
+(sent as `Authorization: Bearer`).
+
+```bash
+export GITLAB_TOKEN=<token>
+colcon build --packages-select pal_policy_deployer
+```
+
+If a listed file is missing locally and `GITLAB_TOKEN` is not set, or the download or checksum fails, configure
+stops with an error naming the file. For the debian build, set `GITLAB_TOKEN` as a masked CI/CD variable of the
+job that runs the package build. To use another registry project, pass
+`-DPAL_MODEL_REGISTRY_URL=https://<host>/api/v4/projects/<url-encoded project path>`.
+
 ### TO DO
 - Add locomotion (Kangaroo) policies
 - Add different model types 
