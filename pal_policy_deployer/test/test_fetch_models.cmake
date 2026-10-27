@@ -26,6 +26,23 @@ if(NOT content STREQUAL "model-a")
   message(FATAL_ERROR "downloaded model has unexpected content: '${content}'")
 endif()
 
+# YAML manifest: every file of an entry lands in the entry's directory.
+file(WRITE "${WORK_DIR}/models.yaml"
+  "body/yaml_task:\n"
+  "  model: stable/body_task\n"
+  "  version: 1.0.0\n"
+  "  version_id: 7\n"
+  "  files:\n"
+  "    a.onnx: ${sha_a}\n")
+pal_policy_models_from_yaml("${WORK_DIR}/models.yaml")
+if(NOT EXISTS "${PAL_MODELS_BINARY_DIR}/body/yaml_task/a.onnx")
+  message(FATAL_ERROR "model listed in the YAML manifest was not fetched")
+endif()
+
+# A manifest without entries is valid.
+file(WRITE "${WORK_DIR}/empty.yaml" "# no models yet\n")
+pal_policy_models_from_yaml("${WORK_DIR}/empty.yaml")
+
 # Failure cases abort configure; each runs in its own cmake process.
 function(expect_failure name call expected_msg)
   set(script "${WORK_DIR}/${name}.cmake")
@@ -55,5 +72,10 @@ expect_failure(no_token
   "pal_policy_model_file(7 body/task/a.onnx ${sha_a})"
   "README"
   --unset=GITLAB_TOKEN)
+
+file(WRITE "${WORK_DIR}/no_files.yaml" "body/yaml_task:\n  version_id: 7\n")
+expect_failure(yaml_missing_files
+  "pal_policy_models_from_yaml(\"${WORK_DIR}/no_files.yaml\")"
+  "files")
 
 message(STATUS "test_fetch_models: all checks passed")

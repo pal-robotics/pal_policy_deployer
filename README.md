@@ -87,9 +87,8 @@ error is logged and the controller gains are left as they are.
 
 The shipped policies can be hosted in the [GitLab Model Registry](https://docs.gitlab.com/user/project/ml/model_registry/)
 of [control/pal_policy_deployer](https://gitlab.pal-robotics.com/control/pal_policy_deployer/-/ml/models)
-instead of git. At CMake configure time, every file listed in
-`pal_policy_deployer/cmake/models_manifest.cmake` is made available under
-`share/pal_policy_deployer/models/<relpath>`:
+instead of git. At CMake configure time, every file listed in the manifest
+`pal_policy_deployer/models.yaml` is made available under `share/pal_policy_deployer/models/<relpath>`:
 
 - if `pal_policy_deployer/models/<relpath>` exists locally, it is used and **nothing is downloaded**;
 - otherwise it is downloaded from the registry into the build directory, checked against its SHA256, and installed.
@@ -141,21 +140,34 @@ To test a staging model, put its files in `pal_policy_deployer/models/<relpath>`
 `curl -H "$AUTH" -o <file> $API/packages/ml_models/<version_id>/files/<file>`) and build. A local file always wins.
 
 **2. Promote to stable.** Repeat step 1 with `NAME=stable/lower_body_loco`, the same version and the same files.
-This gives a new `<version_id>`. Then add the files to the manifest, from the repository root:
+This gives a new `<version_id>`. Then add an entry to the manifest `pal_policy_deployer/models.yaml`:
+```yaml
+lower_body/loco/loco_v315_mjlab:     # model directory below models/
+  model: stable/lower_body_loco      # informative only
+  version: 315.0.0                   # informative only
+  version_id: 3                      # used to download the files
+  files:                             # file name: sha256
+    2026-07-05_07-57-09_lowerbody_flat_locomotion_..._bad_imu_accel.onnx: 611ebf3e...
+    agent.yaml: 9d29b93d...
+    env.yaml: 566adf90...
+```
+To generate the entry from the local files, from the repository root:
 ```bash
-VERSION_ID=<stable version_id>
+NAME=stable/lower_body_loco; VERSION=315.0.0; VERSION_ID=<stable version_id>
 DIR=lower_body/loco/loco_v315_mjlab
-(cd pal_policy_deployer/models && sha256sum $DIR/* | \
-  awk -v v=$VERSION_ID '{print "pal_policy_model_file(" v " " $2 " " $1 ")"}') \
-  >> pal_policy_deployer/cmake/models_manifest.cmake
+(cd pal_policy_deployer/models && \
+  printf '\n%s:\n  model: %s\n  version: %s\n  version_id: %s\n  files:\n' $DIR $NAME $VERSION $VERSION_ID && \
+  sha256sum $DIR/* | awk '{n=$2; sub(".*/","",n); print "    " n ": " $1}') \
+  >> pal_policy_deployer/models.yaml
 ```
 Commit the manifest. Committing the model files to git is optional. Only `stable/` version ids belong in the manifest.
 
 **3. Clean up.** Delete `staging/` models or versions from **Deploy > Model registry** whenever you like: builds
-never use them. Delete a `stable/` version only after removing its lines from the manifest.
+never use them. Delete a `stable/` version only after removing its entry from the manifest.
 
 #### Building
 
+Reading the manifest needs `python3` with PyYAML (`python3-yaml`, declared as a build dependency).
 Fetching needs `GITLAB_TOKEN`: a personal, project or group access token with the `read_api` scope
 (sent as `Authorization: Bearer`).
 

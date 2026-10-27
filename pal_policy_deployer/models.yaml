@@ -1,0 +1,12 @@
+# Stable policy models shipped with pal_policy_deployer, fetched from the GitLab model registry
+# at build time unless the directory exists locally in models/. See the README "Model registry".
+# Only stable/ registry versions belong here.
+
+lower_body/loco/loco_v315_mjlab:
+  model: stable/lower_body_loco
+  version: 315.0.0
+  version_id: 3
+  files:
+    2026-07-05_07-57-09_lowerbody_flat_locomotion_new_model_action_rate_0_2_with_better_imu_and_bad_imu_accel.onnx: 611ebf3e6362b41a04c67782992c5e087256d6e4459953a054f71c3f7a55a5b3
+    agent.yaml: 9d29b93dece252b4d97fba5ff6429c528df7b459977676322f5048c30d55a22e
+    env.yaml: 566adf90c52b8da9cb5876987402b04f6507112d451978d6ae4c01768f53807f

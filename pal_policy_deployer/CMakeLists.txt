@@ -13,7 +13,9 @@ elseif(DEFINED ENV{PAL_DISTRO})
 endif()
 
 include(cmake/fetch_models.cmake)
-include(cmake/models_manifest.cmake)
+pal_policy_models_from_yaml(${CMAKE_CURRENT_SOURCE_DIR}/models.yaml)
+# Re-run the fetch when the manifest changes.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS models.yaml)
 # Models fetched from the registry land here; merged with the source models/ tree on install.
 file(MAKE_DIRECTORY ${PAL_MODELS_BINARY_DIR})
 install(DIRECTORY ${PAL_MODELS_BINARY_DIR}/ DESTINATION share/${PROJECT_NAME}/models)
