@@ -109,61 +109,105 @@ staging/lower_body_loco   315.0.0, 412.0.0, ...   candidates under test, delete 
 stable/lower_body_loco    315.0.0, ...            shipped policies, the only ones in the manifest
 ```
 
-- The model name is `<stage>/<body>_<task>`. The registry is a flat list of models, so the `/` is part of the name;
-  searching for `staging/` in **Deploy > Model registry** lists every staging model.
-- The version is the model directory's number as SemVer (`loco_v315_mjlab` → `315.0.0`). GitLab only accepts SemVer,
-  so `v315` itself cannot be a version.
-- Files are stored flat in a version, under their file name. The manifest maps them back to their path under `models/`.
+- A model directory `models/<robot_type>/<task>/<task>_v<N>_mjlab` maps to the registry model
+  `<stage>/<robot_type>_<task>`, version `<N>.0.0` (GitLab only accepts SemVer versions). Task names must not contain `_`.
+- The registry is a flat list of models, so the `/` is part of the name; searching for `staging/` in
+  **Deploy > Model registry** lists every staging model.
+- Files are stored flat in a version, under their file name.
 
-The commands below use these variables (`GITLAB_TOKEN` needs the `api` scope to push):
+#### handle_models.py
+
+`pal_policy_deployer/scripts/handle_models.py` pushes models to and pulls them from the registry
+(`scripts/handle_models.py --help` shows the same reference).
+
+- `GITLAB_TOKEN` must be set: `api` scope to push, `read_api` to pull.
+- Exactly one of `--push` / `--pull` is required.
+- It works on `staging/` by default, and on `stable/` with `--stable`. `--stable` combines with every command below.
+
+**Naming a model.** A model always refers to a directory in the package's `models/` directory, whatever the current
+directory. It can be given as:
+
+| Form | Example |
+|---|---|
+| `<task>_v<N>_mjlab` plus `--robot-type` | `loco_v534_mjlab --robot-type lower_body` |
+| `<robot_type>/<task>/<task>_v<N>_mjlab` | `lower_body/loco/loco_v534_mjlab` |
+| any path to that directory | `pal_policy_deployer/models/lower_body/loco/loco_v534_mjlab` |
+
+If `--robot-type` is given together with a path, the two must agree. Directories that do not follow this naming
+(e.g. `tiagopro`) cannot be handled by the script.
+
+**Commands** (run from `pal_policy_deployer/`; add `--stable` to any of them to use `stable/` instead of `staging/`):
+
+| Command | What it does |
+|---|---|
+| `scripts/handle_models.py --push <model>` | Push one model. Creates the registry model and version if needed and uploads every file. Skipped if the version already exists upstream. |
+| `scripts/handle_models.py --push <model> --override` | Like `--push`, but if the version exists, re-uploads the files whose SHA256 differs from upstream. Does nothing if all files are identical. |
+| `scripts/handle_models.py --push --robot-type <T>` | Push every local model of robot type `<T>`, skipping versions that exist upstream. Directories that do not follow the naming are listed as ignored. |
+| `scripts/handle_models.py --push --robot-type <T> --override` | Same for every local model of `<T>`, re-uploading changed files of existing versions. |
+| `scripts/handle_models.py --pull <model>` | Download one version into its model directory. Files that already match locally are skipped. Stops before downloading anything if a local file differs from upstream. |
+| `scripts/handle_models.py --pull --all --robot-type <T>` | Pull every upstream version of `<T>` whose model directory does not exist locally. |
+
+For example:
 ```bash
-API=https://gitlab.pal-robotics.com/api/v4/projects/control%2Fpal_policy_deployer
-MLFLOW=$API/ml/mlflow/api/2.0/mlflow
-AUTH="Authorization: Bearer $GITLAB_TOKEN"   # the registry endpoints reject PRIVATE-TOKEN
+scripts/handle_models.py --push loco_v534_mjlab --robot-type lower_body            # → staging/lower_body_loco 534.0.0
+scripts/handle_models.py --push lower_body/loco/loco_v534_mjlab --stable           # → stable/lower_body_loco 534.0.0
+scripts/handle_models.py --pull --all --robot-type full_body_4dof --stable         # ← every missing stable full_body_4dof model
 ```
 
-**1. Push a candidate to staging.** Either use the UI (**Deploy > Model registry > Create model**, **Create new
-version**, upload files on the **Artifacts** tab) or:
-```bash
-NAME=staging/lower_body_loco; VERSION=315.0.0; DIR=pal_policy_deployer/models/lower_body/loco/loco_v315_mjlab
-curl -sS -H "$AUTH" -H "Content-Type: application/json" -X POST $MLFLOW/registered-models/create \
-  -d "{\"name\":\"$NAME\"}"     # only the first time; errors if the model exists
-curl -sS -H "$AUTH" -H "Content-Type: application/json" -X POST $MLFLOW/model-versions/create \
-  -d "{\"name\":\"$NAME\",\"source\":\"pal_policy_deployer\",\"tags\":[{\"key\":\"gitlab.version\",\"value\":\"$VERSION\"}]}"
-# The response's "source" is .../-/ml/models/<model_id>/versions/<version_id>
-VERSION_ID=<version_id>
-for f in $DIR/*; do
-  curl -sS --fail -H "$AUTH" --upload-file "$f" "$API/packages/ml_models/$VERSION_ID/files/$(basename "$f")"
-done
-```
-To test a staging model, put its files in `pal_policy_deployer/models/<relpath>` (download them from the UI, or with
-`curl -H "$AUTH" -o <file> $API/packages/ml_models/<version_id>/files/<file>`) and build. A local file always wins.
+**Details:**
+- With `--stable`, every push that uploads something (new version or `--override`) prints the version's `models.yaml`
+  entry. With `--push --robot-type <T> --stable`, you get one entry per pushed model.
+- Every downloaded file is checked against the SHA256 the registry reports. A mismatch stops the pull and the file is
+  not saved.
+- `--override` never deletes anything upstream. GitLab keeps the previous copy of each re-uploaded file and serves the
+  newest; old copies can be removed under **Deploy > Package registry**. A file that exists upstream but not locally
+  is left in place, with a warning.
+- `--pull --all` skips a model if its directory exists locally, even if it is incomplete; complete it with
+  `--pull <model>`. Upstream versions that are not `<N>.0.0` are skipped, since they map to no `_v<N>_` directory.
+  `--robot-type full_body` does not pick up `full_body_4dof` models.
+- If a registry error stops `--push --robot-type <T>`, the models pushed before it stay pushed. Running the same
+  command again skips them and continues with the rest.
 
-**2. Promote to stable.** Repeat step 1 with `NAME=stable/lower_body_loco`, the same version and the same files.
-This gives a new `<version_id>`. Then add an entry to the manifest `pal_policy_deployer/models.yaml`:
-```yaml
-lower_body/loco/loco_v315_mjlab:     # model directory below models/
-  model: stable/lower_body_loco      # informative only
-  version: 315.0.0                   # informative only
-  version_id: 3                      # used to download the files
-  files:                             # file name: sha256
-    2026-07-05_07-57-09_lowerbody_flat_locomotion_..._bad_imu_accel.onnx: 611ebf3e...
-    agent.yaml: 9d29b93d...
-    env.yaml: 566adf90...
-```
-To generate the entry from the local files, from the repository root:
-```bash
-NAME=stable/lower_body_loco; VERSION=315.0.0; VERSION_ID=<stable version_id>
-DIR=lower_body/loco/loco_v315_mjlab
-(cd pal_policy_deployer/models && \
-  printf '\n%s:\n  model: %s\n  version: %s\n  version_id: %s\n  files:\n' $DIR $NAME $VERSION $VERSION_ID && \
-  sha256sum $DIR/* | awk '{n=$2; sub(".*/","",n); print "    " n ": " $1}') \
-  >> pal_policy_deployer/models.yaml
-```
-Commit the manifest. Committing the model files to git is optional. Only `stable/` version ids belong in the manifest.
+**Invalid combinations**, rejected before anything is sent to the registry:
 
-**3. Clean up.** Delete `staging/` models or versions from **Deploy > Model registry** whenever you like: builds
-never use them. Delete a `stable/` version only after removing its entry from the manifest.
+| Command | Error |
+|---|---|
+| neither `--push` nor `--pull`, or both | one of them is required |
+| `--push` without a model and without `--robot-type` | `--push needs a model or --robot-type` |
+| `--pull` without a model and without `--all`, or with both | `--pull needs either a model or --all` |
+| `--all` without `--robot-type` | `--all needs --robot-type` |
+| `--all` with `--push` | `--all only works with --pull` |
+| `--override` with `--pull` | `--override only works with --push` |
+| `<task>_v<N>_mjlab` without `--robot-type` | `pass --robot-type` |
+| a path whose robot type differs from `--robot-type` | `... is a lower_body model, but --robot-type is full_body_4dof` |
+
+The script also exits with an error when `GITLAB_TOKEN` is missing, when the version is not found upstream (`--pull`),
+and on any registry error.
+
+#### Workflow
+
+1. **Push a candidate to staging:** `scripts/handle_models.py --push loco_v534_mjlab --robot-type lower_body`.
+   Others can test it with `--pull`: a local model directory always wins over the manifest in the build.
+2. **Promote it to stable** once it is good enough:
+   ```bash
+   scripts/handle_models.py --pull loco_v534_mjlab --robot-type lower_body            # if not local yet
+   scripts/handle_models.py --push loco_v534_mjlab --robot-type lower_body --stable   # prints the entry
+   ```
+   Add the printed entry to `pal_policy_deployer/models.yaml` and commit it. Committing the model files to git is
+   optional. Only `stable/` versions belong in the manifest:
+   ```yaml
+   lower_body/loco/loco_v315_mjlab:     # model directory below models/
+     model: stable/lower_body_loco      # informative only
+     version: 315.0.0                   # informative only
+     version_id: 3                      # used to download the files
+     files:                             # file name: sha256
+       2026-07-05_07-57-09_lowerbody_flat_locomotion_..._bad_imu_accel.onnx: 611ebf3e...
+       agent.yaml: 9d29b93d...
+       env.yaml: 566adf90...
+   ```
+3. **Clean up:** delete `staging/` models or versions from **Deploy > Model registry** whenever you like: builds never
+   use them. Delete a `stable/` version only after removing its entry from the manifest. Overriding a `stable/` version
+   changes its checksums, so update its manifest entry with the printed one.
 
 #### Building
 
