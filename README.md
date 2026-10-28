@@ -120,7 +120,7 @@ stable/lower_body_loco    315.0.0, ...            shipped policies, the only one
 `pal_policy_deployer/scripts/handle_models.py` pushes models to and pulls them from the registry
 (`scripts/handle_models.py --help` shows the same reference).
 
-- `GITLAB_TOKEN` must be set: `api` scope to push, `read_api` to pull.
+- `GITLAB_TOKEN` must be set: `api` scope to push, `read_api` to pull. The script needs `python3` with PyYAML.
 - Exactly one of `--push` / `--pull` is required.
 - It works on `staging/` by default, and on `stable/` with `--stable`. `--stable` combines with every command below.
 
@@ -155,8 +155,18 @@ scripts/handle_models.py --pull --all --robot-type full_body_4dof --stable      
 ```
 
 **Details:**
-- With `--stable`, every push that uploads something (new version or `--override`) prints the version's `models.yaml`
-  entry. With `--push --robot-type <T> --stable`, you get one entry per pushed model.
+- `--push --stable` updates `pal_policy_deployer/models.yaml` automatically, adding or replacing the model's entry:
+  | Upstream `stable/` version | `models.yaml` |
+  |---|---|
+  | new: created and uploaded | entry added |
+  | exists, `--override` re-uploaded files, or all files already identical | entry added or replaced with the new checksums |
+  | exists and identical to the local files (without `--override`) | entry added if missing, nothing uploaded |
+  | exists with different files (without `--override`) | left alone, with a warning |
+
+  The file is rewritten sorted by directory. The comment block at the top is kept; comments inside entries are not.
+  Re-running `--push --robot-type <T> --stable` therefore rebuilds the entries of all of `<T>`'s stable models without
+  uploading anything. Staging pushes and pulls never touch `models.yaml`. To drop a model from the build, delete its
+  entry by hand. Review the change with `git diff` before committing it.
 - Every downloaded file is checked against the SHA256 the registry reports. A mismatch stops the pull and the file is
   not saved.
 - `--override` never deletes anything upstream. GitLab keeps the previous copy of each re-uploaded file and serves the
@@ -191,10 +201,10 @@ and on any registry error.
 2. **Promote it to stable** once it is good enough:
    ```bash
    scripts/handle_models.py --pull loco_v534_mjlab --robot-type lower_body            # if not local yet
-   scripts/handle_models.py --push loco_v534_mjlab --robot-type lower_body --stable   # prints the entry
+   scripts/handle_models.py --push loco_v534_mjlab --robot-type lower_body --stable   # also updates models.yaml
    ```
-   Add the printed entry to `pal_policy_deployer/models.yaml` and commit it. Committing the model files to git is
-   optional. Only `stable/` versions belong in the manifest:
+   Commit the updated `pal_policy_deployer/models.yaml`. Committing the model files to git is optional. Only `stable/`
+   versions belong in the manifest. An entry looks like this:
    ```yaml
    lower_body/loco/loco_v315_mjlab:     # model directory below models/
      model: stable/lower_body_loco      # informative only
@@ -207,7 +217,7 @@ and on any registry error.
    ```
 3. **Clean up:** delete `staging/` models or versions from **Deploy > Model registry** whenever you like: builds never
    use them. Delete a `stable/` version only after removing its entry from the manifest. Overriding a `stable/` version
-   changes its checksums, so update its manifest entry with the printed one.
+   (`--push --stable --override`) changes its checksums; the script updates the entry, so commit `models.yaml` with it.
 
 #### Building
 
