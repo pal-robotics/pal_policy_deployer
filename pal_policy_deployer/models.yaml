@@ -2,6 +2,55 @@
 # at build time unless the directory exists locally in models/. See the README "Model registry".
 # Only stable/ registry versions belong here.
 
+full_body_4dof/imitation/imitation_v30_mjlab:
+  model: stable/full_body_4dof_imitation
+  version: 30.0.0
+  version_id: 23
+  files:
+    2026-05-08_11-58-51_jump_com_air_time_reward_low_imu_noise.onnx: d404a4652e296010b730144a9ada2373a9b334fa78d98fee0a58ad4d1c11975e
+    env.yaml: d3c1cbfb1c48a223a14a3220f562ad0d5541083588939d370afc2098f21f0e34
+
+full_body_4dof/loco/loco_v265_mjlab:
+  model: stable/full_body_4dof_loco
+  version: 265.0.0
+  version_id: 24
+  files:
+    2026-05-19_20-15-22_pal_mjlab_1905_updated_model_hip_roll_bias_low_imu_original_dr.onnx: ccefba504473bac03fa7ccd566f774a6bdea2b055721083a283a6686b8d9309b
+    agent.yaml: 51bde032cc1fb3c5d739d6c15c151a9243fd70ac6e3bab5e9c4c22d70e5a59e9
+    env.yaml: 7d1e8129261c07b78105c87a12b24372b91d97e89a38bd8991c5abd6889af1ce
+
+full_body_4dof/loco/loco_v700_mjlab:
+  model: stable/full_body_4dof_loco
+  version: 700.0.0
+  version_id: 25
+  files:
+    2026-07-27_14-29-18_B15A1.onnx: 705ba6c043c5dae8d1045c65647e5bae192556e64a2005bba7908513054e4a9a
+    agent.yaml: e2116c82c770e51f6adc3dbc9e5ce3adf1d81acd8d2856b9553a9870720712db
+    env.yaml: 3c29d070d8a60645e3c52d69164d0979eb333766c54ff62463244b2331167d1b
+
+lower_body/imitation/imitation_v472_mjlab:
+  model: stable/lower_body_imitation
+  version: 472.0.0
+  version_id: 15
+  files:
+    2026-06-12_10-11-48_Kang_low_bod_Jump_24.onnx: 79a18154b133a801549032034e69633f92b3525b4bcc0f90d2563d865db713ec
+    motion.npz: 897f371ee52d58c11e579314e48736d313785f33738ccaa8b6c7b2d9cab1797a
+
+lower_body/imitation/imitation_v719_mjlab:
+  model: stable/lower_body_imitation
+  version: 719.0.0
+  version_id: 16
+  files:
+    2026-07-04_08-32-46_Kang_low_body_jump_new_ankle_motion_trimmed_with_action_rate_0_18.onnx: d44f1cee8dcfdfb44964fb6c91a582603ae5298fc020794d1775c22b21b6cc0f
+    JumpTrimmed.npz: f80a588663299ddef394e449f532b99b3bf157ee666e5f8c41679033c999cdc9
+
+lower_body/loco/loco_v306_mjlab:
+  model: stable/lower_body_loco
+  version: 306.0.0
+  version_id: 17
+  files:
+    2026-07-02_02-10-23_lowerbody_flat_locomotion_new_model_action_rate_0_2.onnx: f75ad0ecdde26d19cd26977df8bd4942b040c6f1d3e34587a1884dce204b1c3a
+
 lower_body/loco/loco_v315_mjlab:
   model: stable/lower_body_loco
   version: 315.0.0
@@ -10,3 +59,48 @@ lower_body/loco/loco_v315_mjlab:
     2026-07-05_07-57-09_lowerbody_flat_locomotion_new_model_action_rate_0_2_with_better_imu_and_bad_imu_accel.onnx: 611ebf3e6362b41a04c67782992c5e087256d6e4459953a054f71c3f7a55a5b3
     agent.yaml: 9d29b93dece252b4d97fba5ff6429c528df7b459977676322f5048c30d55a22e
     env.yaml: 566adf90c52b8da9cb5876987402b04f6507112d451978d6ae4c01768f53807f
+
+lower_body/loco/loco_v534_mjlab:
+  model: stable/lower_body_loco
+  version: 534.0.0
+  version_id: 18
+  files:
+    2026-07-01_11-49-43_B2A3.onnx: e63bd9eb5444e3e181978f517113e49572c5c99ab414e39e77d2cd85d3f80934
+    agent.yaml: 9a5b3f0b8aac95601a7c3893e496b57aeb51f76b9ee226dc42ccfe8cc1a40a7c
+    env.yaml: d845957807cf8201f4eb27224ac540e68a7523c0bf609ee17b9e38dcb771d868
+
+lower_body/loco/loco_v619_mjlab:
+  model: stable/lower_body_loco
+  version: 619.0.0
+  version_id: 19
+  files:
+    2026-06-30_21-06-27_B6A1.onnx: 081c6caad035160943d07fa185227ec89f46b47322d3328059265d5743ac906c
+    agent.yaml: a5b66b1ceb3b2f35b1198154901b38d13b9fbed0bff7308cfadc1b7a6263663c
+    env.yaml: 53fb2e19859834b45f0e64a20c08feedb4bba99b211e75a1296507bbcf7e74d2
+
+lower_body/loco/loco_v630_mjlab:
+  model: stable/lower_body_loco
+  version: 630.0.0
+  version_id: 20
+  files:
+    2026-07-02_12-01-17_B8A1.onnx: 6ec41a0c012b9f92cef1f5a76615b3738679cc373fe82c3770b0f0e9c2294e58
+    agent.yaml: 5ab1747144f3cb64e3ad8ccee1933b1f16a4b7e16896962d3a4a9fc4eea1e381
+    env.yaml: b27191f8a8b1d90d88e7f559c5db8328c4f8d6e9026635cc24af0e0e7a95f6bc
+
+lower_body/loco/loco_v636_mjlab:
+  model: stable/lower_body_loco
+  version: 636.0.0
+  version_id: 21
+  files:
+    2026-07-02_12-01-14_B10A4.onnx: 7ecc40983c34b4b3b59d692c37ddea83dbc148c30b209e5a274bce962672a201
+    agent.yaml: 5be859a0e1a876fbc9ed3980a1329a6168546d9ee5a97f9a1ab2a6b0a66e3b3e
+    env.yaml: 8efabbd680af2cfbeb83879e37db7e78c9babbc376bdadc33446b91137a37fe7
+
+lower_body/loco/loco_v639_mjlab:
+  model: stable/lower_body_loco
+  version: 639.0.0
+  version_id: 22
+  files:
+    2026-07-02_23-59-10_B12A2.onnx: 60ce2880c5db5cb9ef59fd9dd05d5002677ad9d49527f3e86e1b337ede5a68f1
+    agent.yaml: 0c44232f485697eae6ec356df8bdb045c141842c6019011df6ede50d3acc1fe2
+    env.yaml: 8825dc6f85c1a271a72c0ad44d646b4d33f9e56215329af288b301638e1e0c3e
