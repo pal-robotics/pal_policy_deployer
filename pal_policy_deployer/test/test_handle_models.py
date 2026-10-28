@@ -26,6 +26,12 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+MANIFEST_HEADER = "# Stable policy models.\n# Only stable/ versions belong here.\n"
+# Sorts before lower_body/..., so it must stay first.
+OTHER_ENTRY = ("full_body_4dof/loco/loco_v700_mjlab:\n  model: stable/full_body_4dof_loco\n"
+               "  version: 700.0.0\n  version_id: 25\n  files:\n    a.onnx: " + "a" * 64 + "\n")
+
+
 class FakeGitLab(BaseHTTPRequestHandler):
     """In-memory registry. Every list is served one item per page to exercise pagination."""
 
@@ -160,6 +166,7 @@ class RegistryTestCase(unittest.TestCase):
         self.url = f"http://127.0.0.1:{self.server.server_port}{PROJECT}"
         self.tmp = TemporaryDirectory()
         self.models = Path(self.tmp.name) / "models"
+        self.manifest = Path(self.tmp.name) / "models.yaml"
         os.environ["GITLAB_TOKEN"] = "tok"
 
     def tearDown(self):
@@ -225,14 +232,67 @@ class TestPush(RegistryTestCase):
         self.assertIn("up to date", out)
         self.assertEqual(self.writes(), [])
 
-    def test_stable_push_prints_manifest_entry(self):
+    def test_stable_push_adds_manifest_entry_keeping_header_and_order(self):
+        self.manifest.write_text(MANIFEST_HEADER + "\n" + OTHER_ENTRY)
         self.local_model("lower_body/loco/loco_v534_mjlab", {"p.onnx": b"onnx"})
+
+        self.run_cli("--push", "lower_body/loco/loco_v534_mjlab", "--stable")
+
+        vid = FakeGitLab.versions[("stable/lower_body_loco", "534.0.0")]["vid"]
+        self.assertEqual(self.manifest.read_text(), MANIFEST_HEADER + "\n" + OTHER_ENTRY + "\n" + (
+            "lower_body/loco/loco_v534_mjlab:\n  model: stable/lower_body_loco\n"
+            f"  version: 534.0.0\n  version_id: {vid}\n  files:\n    p.onnx: {sha(b'onnx')}\n"))
+
+    def test_stable_push_creates_missing_manifest(self):
+        self.local_model("lower_body/loco/loco_v534_mjlab", {"p.onnx": b"onnx"})
+
+        self.run_cli("--push", "lower_body/loco/loco_v534_mjlab", "--stable")
+
+        self.assertIn("lower_body/loco/loco_v534_mjlab:", self.manifest.read_text())
+
+    def test_stable_override_replaces_manifest_checksums(self):
+        self.local_model("lower_body/loco/loco_v534_mjlab", {"p.onnx": b"new"})
+        FakeGitLab.add_version("stable/lower_body_loco", "534.0.0", {"p.onnx": b"old"})
+        vid = FakeGitLab.versions[("stable/lower_body_loco", "534.0.0")]["vid"]
+        self.manifest.write_text(
+            "lower_body/loco/loco_v534_mjlab:\n  model: stable/lower_body_loco\n"
+            f"  version: 534.0.0\n  version_id: {vid}\n  files:\n    p.onnx: {sha(b'old')}\n")
+
+        self.run_cli("--push", "lower_body/loco/loco_v534_mjlab", "--stable", "--override")
+
+        text = self.manifest.read_text()
+        self.assertIn(f"p.onnx: {sha(b'new')}", text)
+        self.assertNotIn(sha(b"old"), text)
+
+    def test_existing_identical_stable_version_is_added_to_manifest(self):
+        self.manifest.write_text(MANIFEST_HEADER)
+        self.local_model("lower_body/loco/loco_v534_mjlab", {"p.onnx": b"same"})
+        FakeGitLab.add_version("stable/lower_body_loco", "534.0.0", {"p.onnx": b"same"})
+
+        self.run_cli("--push", "lower_body/loco/loco_v534_mjlab", "--stable")
+
+        self.assertEqual(self.writes(), [])
+        self.assertIn(f"p.onnx: {sha(b'same')}", self.manifest.read_text())
+
+    def test_existing_differing_stable_version_leaves_manifest_alone(self):
+        self.manifest.write_text(MANIFEST_HEADER)
+        self.local_model("lower_body/loco/loco_v534_mjlab", {"p.onnx": b"mine"})
+        FakeGitLab.add_version("stable/lower_body_loco", "534.0.0", {"p.onnx": b"theirs"})
 
         out = self.run_cli("--push", "lower_body/loco/loco_v534_mjlab", "--stable")
 
-        vid = FakeGitLab.versions[("stable/lower_body_loco", "534.0.0")]["vid"]
-        self.assertIn("lower_body/loco/loco_v534_mjlab:\n  model: stable/lower_body_loco\n"
-                      f"  version: 534.0.0\n  version_id: {vid}\n  files:\n    p.onnx: {sha(b'onnx')}\n", out)
+        self.assertIn("not updating models.yaml", out)
+        self.assertEqual(self.manifest.read_text(), MANIFEST_HEADER)
+
+    def test_staging_push_and_pulls_never_touch_manifest(self):
+        self.local_model("lower_body/loco/loco_v534_mjlab", {"p.onnx": b"onnx"})
+        FakeGitLab.add_version("stable/lower_body_loco", "619.0.0", {"s.onnx": b"s"})
+
+        self.run_cli("--push", "lower_body/loco/loco_v534_mjlab")
+        self.run_cli("--pull", "lower_body/loco/loco_v619_mjlab", "--stable")
+        self.run_cli("--pull", "--all", "--robot-type", "lower_body", "--stable")
+
+        self.assertFalse(self.manifest.exists())
 
     def test_robot_type_alone_pushes_all_missing_local_models(self):
         self.local_model("lower_body/loco/loco_v315_mjlab", {"a.onnx": b"a"})

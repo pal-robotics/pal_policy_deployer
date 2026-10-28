@@ -17,7 +17,9 @@ default and stable/ with --stable.
 skipped; with --override, files whose checksum differs from upstream are re-uploaded (GitLab
 keeps the old copy and serves the newest; nothing is deleted upstream).
 Without <model>, every local model of --robot-type is pushed that way.
-With --stable, the models.yaml manifest entry of each version that got uploads is printed.
+With --stable, the package's models.yaml manifest is updated: the model's entry is added or
+replaced whenever the upstream version matches the local files afterwards (new, overridden or
+already identical); an existing stable version with different files leaves it untouched.
 
 --pull downloads the files of one model version into its model directory, verifying their
 SHA256; files that already match are skipped, and a local file that differs from upstream
@@ -39,6 +41,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+import yaml
 
 DEFAULT_REGISTRY_URL = "https://gitlab.pal-robotics.com/api/v4/projects/control%2Fpal_policy_deployer"
 MODELS_DIR = Path(__file__).resolve().parents[1] / "models"
@@ -187,44 +191,83 @@ class Registry:
 
 
 def manifest_entry(rel, model, version, version_id, files):
-    """Return the models.yaml entry for a pushed stable version."""
+    """Return the models.yaml entry text of one stable version."""
     lines = [f"{rel.as_posix()}:", f"  model: {model}", f"  version: {version}",
              f"  version_id: {version_id}", "  files:"]
     lines += [f"    {name}: {digest}" for name, digest in sorted(files.items())]
     return "\n".join(lines) + "\n"
 
 
+def update_manifest(path, rel, model, version, version_id, files):
+    """Add or replace the entry of rel in the models.yaml manifest at path.
+
+    The file is rewritten from its entries, sorted by directory; the leading comment block is
+    kept, comments inside entries are not. The file is created if it does not exist.
+    """
+    text = path.read_text() if path.exists() else ""
+    header = []
+    for line in text.splitlines(keepends=True):
+        if line.strip() and not line.startswith("#"):
+            break
+        header.append(line)
+    header = "".join(header).rstrip("\n")
+
+    entries = yaml.safe_load(text) or {}
+    entries[rel.as_posix()] = {"model": model, "version": version, "version_id": version_id, "files": files}
+    body = "\n".join(manifest_entry(Path(d), e.get("model", ""), e.get("version", ""), e["version_id"], e["files"])
+                     for d, e in sorted(entries.items()))
+    path.write_text((header + "\n\n" if header else "") + body)
+    print(f"Updated {path.name}: {rel}")
+
+
 def push(registry, models_dir, rel, stage, override):
-    """Push one model directory; return True if anything was uploaded."""
+    """Push one model directory; return True if anything was uploaded.
+
+    For stable/, the models.yaml next to models_dir is updated whenever the upstream version
+    matches the local files afterwards (new, overridden, or already identical); if it exists
+    upstream with different files and override is False, the manifest is left alone.
+    """
     name, version = registry_name_and_version(rel)
     model = stage + name
     local = {p.name: p for p in sorted((models_dir / rel).iterdir()) if p.is_file()}
     if not local:
         sys.exit(f"{models_dir / rel} has no files to push")
     digests = {n: sha256(p.read_bytes()) for n, p in local.items()}
+    stable = stage == "stable/"
+
+    def record():
+        if stable:
+            update_manifest(models_dir.parent / "models.yaml", rel, model, version, int(version_id), digests)
 
     version_id = registry.version_id(model, version)
     if version_id is None:
         version_id = registry.create_version(model, version, rel.name)
         to_upload = list(local)
-    elif not override:
+    elif not override and not stable:
         print(f"Skipping {rel}: {model} {version} already exists upstream (use --override to update it)")
         return False
     else:
         upstream = registry.files(model, version) or {}
         to_upload = [n for n in local if upstream.get(n) != digests[n]]
+        if not override:
+            print(f"Skipping {rel}: {model} {version} already exists upstream (use --override to update it)")
+            if to_upload or set(upstream) != set(local):
+                print(f"Warning: {rel} differs from {model} {version}; not updating models.yaml")
+            else:
+                record()
+            return False
         for n in sorted(set(upstream) - set(local)):
             print(f"Warning: {model} {version} has {n}, which is not in {rel}; it stays upstream")
         if not to_upload:
             print(f"{model} {version} is up to date")
+            record()
             return False
 
     for n in to_upload:
         print(f"Uploading {rel / n}")
         registry.upload(version_id, local[n])
     print(f"Pushed {model} {version} (version_id {version_id})")
-    if stage == "stable/":
-        print("models.yaml entry:\n" + manifest_entry(rel, model, version, version_id, digests))
+    record()
     return True
 
 
