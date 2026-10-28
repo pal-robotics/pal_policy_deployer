@@ -26,6 +26,8 @@ if(BUILD_TESTING)
       -DHELPER=${CMAKE_CURRENT_SOURCE_DIR}/cmake/fetch_models.cmake
       -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_fetch_models
       -P ${CMAKE_CURRENT_SOURCE_DIR}/test/test_fetch_models.cmake)
+  add_test(NAME test_handle_models
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/test/test_handle_models.py)
 endif()
 
 if(ament_cmake_auto_VERSION VERSION_LESS "2.6.0")
